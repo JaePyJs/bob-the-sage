@@ -54,9 +54,6 @@ async def synthesize_literature(payload: SynthesizePayload) -> dict:
     lang_name = LANG_NAMES.get(payload.output_language, "English")
     lang_note = f" Respond in {lang_name}." if payload.output_language != "en" else ""
 
-    if not GEMINI_API_KEY:
-        return _fallback_synthesis(papers, payload.query, year_range)
-
     system = (
         f"You are an expert academic literature analyst.{lang_note} "
         "Analyze the provided research papers and produce a rigorous, specific synthesis. "
@@ -98,6 +95,9 @@ Produce 3-5 key_themes and 3-4 research_gaps. Be specific — cite actual paper 
 
     try:
         raw = await generate_text(prompt, system=system, max_tokens=2000)
+        if not raw:
+            return _fallback_synthesis(papers, payload.query, year_range)
+            
         # Strip markdown code fences if present
         raw = raw.strip()
         if raw.startswith("```"):

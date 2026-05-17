@@ -68,16 +68,15 @@ async def generate_proposal(payload: ProposalPayload) -> dict:
     lang_name = LANG_NAMES.get(payload.output_language, "English")
     lang_instruction = f" Write the proposal in {lang_name}." if payload.output_language != "en" else ""
 
-    if GEMINI_API_KEY:
-        system = (
-            "You are an expert academic research proposal writer."
-            f"{lang_instruction}"
-            " Generate a compelling, specific, well-structured research proposal in LaTeX format."
-            " Use the actual paper titles, authors, and findings provided — do NOT use generic placeholders."
-            " The proposal must be grounded in the real literature provided."
-        )
+    system = (
+        "You are an expert academic research proposal writer."
+        f"{lang_instruction}"
+        " Generate a compelling, specific, well-structured research proposal in LaTeX format."
+        " Use the actual paper titles, authors, and findings provided — do NOT use generic placeholders."
+        " The proposal must be grounded in the real literature provided."
+    )
 
-        prompt = f"""Generate a complete LaTeX research proposal based on this systematic literature review:
+    prompt = f"""Generate a complete LaTeX research proposal based on this systematic literature review:
 
 RESEARCH QUERY: {payload.query}
 
@@ -100,14 +99,14 @@ Generate a complete LaTeX document with these sections:
 Start with \\documentclass{{article}} ... \\begin{{document}} and end with \\end{{document}}.
 Make the proposal specific to "{payload.query}" — use exact paper titles and findings."""
 
-        try:
-            latex = await generate_text(prompt, system=system, max_tokens=3000)
-            if latex.strip():
-                return {"latex": latex, "ai_generated": True, "num_papers": num_papers}
-        except Exception:
-            pass  # Fall through to template
+    try:
+        latex = await generate_text(prompt, system=system, max_tokens=3000)
+        if latex.strip():
+            return {"latex": latex, "ai_generated": True, "num_papers": num_papers}
+    except Exception:
+        pass  # Fall through to template
 
-    # High-quality template fallback (when no Gemini key)
+    # High-quality template fallback (when no Gemini key or generation fails)
     # Extract themes from abstracts
     all_text = " ".join(
         (p.get("title") or "") + " " + (p.get("abstract") or "")
