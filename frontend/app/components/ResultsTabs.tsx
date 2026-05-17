@@ -431,7 +431,7 @@ function CitationGraphPane({ results }: { results?: PipelineResults }) {
     return () => {
       network.destroy();
     };
-  }, [results]);
+  }, [results?.session_id]);
 
   const summary = results?.graph_summary;
 
