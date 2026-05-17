@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import settings
-from backend.api.routes import query, analyze, proposal, pipeline
+from backend.api.routes import query, analyze, proposal, pipeline, chat, synthesize
 from backend.api.websocket import router as websocket_router
 
 app = FastAPI(title="SAGE Backend")
@@ -19,6 +19,8 @@ app.include_router(query.router)
 app.include_router(analyze.router)
 app.include_router(proposal.router)
 app.include_router(pipeline.router)
+app.include_router(chat.router)
+app.include_router(synthesize.router)
 app.include_router(websocket_router)
 
 

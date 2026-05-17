@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "deepl": {
+      "command": "npx",
+      "args": ["deepl-mcp-server"],
+      "env": {
+        "DEEPL_API_KEY": "b3fdb953-e5bd-40ba-8e45-da8622ae488e:fx"
+      }
+    },
+    "paper_search": {
+      "command": "uv",
+      "args": ["run", "--with", "paper-search-mcp", "python", "/home/jae/sage/mcp_servers/paper_search/run.py"],
+      "env": {}
+    }
+  }
+}

@@ -116,7 +116,7 @@ class TestBuildCitationGraph:
         assert result.nodes[0].id == "p1"
 
     def test_dangling_citations_ignored(self):
-        """Test that citations to non-existent papers are ignored."""
+        """Test that citations to non-existent papers are still included as external nodes."""
         papers = [
             {"paper_id": "p1", "title": "Paper 1"},
         ]
@@ -127,8 +127,10 @@ class TestBuildCitationGraph:
         
         result = build_citation_graph(papers, citations)
         
-        assert len(result.nodes) == 1
-        assert len(result.edges) == 0  # No valid edges
+        # Should include original paper + 2 external papers
+        assert len(result.nodes) == 3
+        # Edges should be created (citing -> cited)
+        assert len(result.edges) == 2
 
     def test_malformed_citations(self):
         """Test that malformed citation records are skipped."""

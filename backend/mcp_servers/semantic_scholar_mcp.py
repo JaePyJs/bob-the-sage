@@ -78,6 +78,7 @@ async def search_papers(
     max_results: int = 30,
     year_from: int | None = None,
     year_to: int | None = None,
+    categories: list[str] | None = None,
 ) -> dict[str, Any]:
     """Search for papers using Semantic Scholar API.
 
@@ -107,6 +108,24 @@ async def search_papers(
     if year_from or year_to:
         year_range = f"{year_from or 1900}-{year_to or 2030}"
         params["year"] = year_range
+    
+    # Add discipline filters if selected
+    # S2 API uses fieldsOfStudy parameter with comma-separated values
+    if categories:
+        # Map frontend discipline codes to S2 field of study names
+        field_map = {
+            "biology": "Biology",
+            "medicine": "Medicine",
+            "chemistry": "Chemistry",
+            "physics": "Physics",
+            "computer-science": "Computer Science",
+            "psychology": "Psychology",
+            "economics": "Economics",
+            "sociology": "Sociology",
+        }
+        fields = [field_map[c] for c in categories if c in field_map]
+        if fields:
+            params["fieldsOfStudy"] = ",".join(fields)
 
     try:
         data = await _s2_get("/paper/search", params=params)

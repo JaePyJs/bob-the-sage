@@ -12,11 +12,13 @@ from typing import Any
 _sessions: dict[str, dict[str, Any]] = {}
 
 
-def create_session(session_id: str, query: str) -> dict[str, Any]:
+def create_session(session_id: str, query: str, max_papers: int = 30, disciplines: list[str] | None = None) -> dict[str, Any]:
     """Create a new pipeline session."""
     session = {
         "session_id": session_id,
         "query": query,
+        "max_papers": max_papers,
+        "disciplines": disciplines or [],
         "stage": "pending",
         "progress": 0,
         "papers_found": 0,
@@ -62,7 +64,7 @@ def run_pipeline(session_id: str) -> None:
             update_session(session_id, stage="discovery", progress=10, message="Searching papers...")
             await asyncio.sleep(0.5)
 
-            search_result = await search_papers(query, max_results=30)
+            search_result = await search_papers(query, max_results=session.get("max_papers", 30), categories=session.get("disciplines"))
             papers = search_result["papers"]
             citations = search_result["citations"]
             source = search_result.get("source", "unknown")
@@ -79,7 +81,7 @@ def run_pipeline(session_id: str) -> None:
             if not citations and papers:
                 citations = _generate_synthetic_citations(papers)
 
-            update_session(session_id, stage="extraction", progress=55, papers_analyzed=min(papers_found, 10), message=f"{len(citations)} citation edges")
+            update_session(session_id, stage="extraction", progress=55, papers_analyzed=papers_found, message=f"{len(citations)} citation edges")
             await asyncio.sleep(0.3)
 
             # Stage 3: Synthesis
@@ -105,7 +107,7 @@ def run_pipeline(session_id: str) -> None:
                 themes_identified=themes,
                 results={
                     "session_id": session_id,
-                    "papers": papers[:10],
+                    "papers": papers,  # Send ALL papers, not just first 10
                     "citations": citations,
                     "graph": graph.model_dump(),
                     "graph_summary": graph_summary,

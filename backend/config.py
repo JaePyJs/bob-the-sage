@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     deepl_api_key: str | None = None
     semantic_scholar_api_key: str | None = None
+    gemini_api_key: str | None = None
     allowed_origins_raw: str = "http://localhost:3000"
     arxiv_delay_seconds: int = 5
     s2_requests_per_second: int = 1

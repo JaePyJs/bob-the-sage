@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "deepl": {
+      "command": "/home/jae/.local/bin/deepl-mcp-server",
+      "env": {
+        "DEEPL_API_KEY": "YOUR_DEEPL_API_KEY_HERE"
+      }
+    },
+    "paper_search": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "paper-search-mcp",
+        "python",
+        "/home/jae/sage/mcp_servers/paper_search/run.py"
+      ],
+      "env": {
+        "SEMANTIC_SCHOLAR_API_KEY": "YOUR_SEMANTIC_SCHOLAR_KEY_HERE"
+      }
+    }
+  }
+}

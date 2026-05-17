@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
@@ -89,7 +89,7 @@ function IconCheck() {
   );
 }
 
-const STAGE_ICONS: Record<StageId, () => JSX.Element> = {
+const STAGE_ICONS: Record<StageId, () => React.JSX.Element> = {
   discovery:  IconDiscovery,
   extraction: IconExtraction,
   synthesis:  IconSynthesis,

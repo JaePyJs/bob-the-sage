@@ -1,23 +1,24 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { QuerySection }      from "./components/QuerySection";
-import { RealtimePipeline }  from "./components/RealtimePipeline";
-import { ResultsTabs }       from "./components/ResultsTabs";
-import { ChatDrawer }        from "./components/ChatDrawer";
+import Image from "next/image";
+import { QuerySection }     from "./components/QuerySection";
+import { RealtimePipeline } from "./components/RealtimePipeline";
+import { ResultsTabs }      from "./components/ResultsTabs";
+import { ChatDrawer }       from "./components/ChatDrawer";
 
 export default function Page() {
-  const [session,  setSession]  = useState<string | null>(null);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState<string | null>(null);
+  const [session,   setSession]   = useState<string | null>(null);
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
-  const [results, setResults] = useState<unknown>(null);
-  const [query, setQuery] = useState<string>("");
+  const [results,   setResults]   = useState<unknown>(null);
+  const [query,         setQuery]         = useState<string>("");
+  const [outputLanguage, setOutputLanguage] = useState<string>("en");
 
   const handleRun = useCallback(
     async (payload: {
       query: string;
-      language: string;
       years: [number, number] | null;
       max_papers: number;
       disciplines: string[];
@@ -27,13 +28,14 @@ export default function Page() {
       setSession(null);
       setError(null);
       setCompleted(false);
+      setResults(null);
       setQuery(payload.query);
+      setOutputLanguage(payload.output_language ?? "en");
 
       try {
         const body: Record<string, unknown> = {
-          query:         payload.query,
-          language:     payload.language,
-          max_papers:    payload.max_papers,
+          query:           payload.query,
+          max_papers:      payload.max_papers,
           output_language: payload.output_language,
         };
         if (payload.years) body.years = payload.years;
@@ -44,11 +46,11 @@ export default function Page() {
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify(body),
         });
-      const data = await res.json();
+        const data = await res.json();
 
-      if (res.ok && data.session_id) {
-        setSession(data.session_id);
-      } else {
+        if (res.ok && data.session_id) {
+          setSession(data.session_id);
+        } else {
           setError(data.detail ?? "Request failed");
         }
       } catch (err) {
@@ -68,13 +70,15 @@ export default function Page() {
       {/* ── Header ─────────────────────────────────── */}
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Sage logo mark */}
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-            style={{ background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)" }}
-            aria-hidden="true"
-          >
-            S
+          <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+            <Image
+              src="/Logo.png"
+              alt="SAGE Logo"
+              width={32}
+              height={32}
+              className="object-contain"
+              priority
+            />
           </div>
           <div>
             <h1 className="text-[22px] font-semibold text-[#E5E7EB] leading-none">
@@ -88,27 +92,14 @@ export default function Page() {
 
         {/* Nav */}
         <nav className="flex items-center gap-5">
-          <a
-            href="#"
-            className="text-[13px] text-[#9CA3AF] hover:text-[#E5E7EB] transition-colors"
-          >
-            About
-          </a>
-          <a
-            href="#"
-            className="text-[13px] text-[#9CA3AF] hover:text-[#E5E7EB] transition-colors"
-          >
-            Docs
-          </a>
-          <div
-            className="w-px h-4 bg-[rgba(148,163,184,0.3)]"
-            aria-hidden="true"
-          />
+          <a href="#" className="text-[13px] text-[#9CA3AF] hover:text-[#E5E7EB] transition-colors">About</a>
+          <a href="#" className="text-[13px] text-[#9CA3AF] hover:text-[#E5E7EB] transition-colors">Docs</a>
+          <div className="w-px h-4 bg-[rgba(148,163,184,0.3)]" aria-hidden="true" />
           <span
             className="text-[11px] px-2 py-0.5 rounded font-mono"
             style={{ backgroundColor: "rgba(59,130,246,0.12)", color: "#3B82F6" }}
           >
-            IBM Bob powered
+            Gemini powered
           </span>
         </nav>
       </header>
@@ -133,13 +124,17 @@ export default function Page() {
       )}
 
       {/* ── Pipeline ────────────────────────────────── */}
-      <RealtimePipeline sessionId={session} query={query} onComplete={(r) => { setCompleted(true); setResults(r); }} />
+      <RealtimePipeline
+        sessionId={session}
+        query={query}
+        onComplete={(r) => { setCompleted(true); setResults(r); }}
+      />
 
       {/* ── Results ────────────────────────────────── */}
-      <ResultsTabs completed={completed} results={results} />
+      <ResultsTabs completed={completed} results={results} query={query} outputLanguage={outputLanguage} />
 
-      {/* ── Chat Drawer ────────────────────────────── */}
-      <ChatDrawer />
+      {/* ── Chat Drawer ─────────────────────────────── */}
+      <ChatDrawer results={results} />
     </main>
   );
 }

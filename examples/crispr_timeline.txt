@@ -1,0 +1,2 @@
+This file will be replaced by a PNG timeline visualization
+exported from the SAGE timeline engine for the CRISPR use case.

@@ -18,7 +18,7 @@ Performance Characteristics:
 - PageRank converges in ~100 iterations for academic citation graphs
 """
 
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 import networkx as nx
 
@@ -59,104 +59,84 @@ def build_citation_graph(
         - Empty graphs return empty node/edge lists (no error)
         - Disconnected graphs handled gracefully with uniform fallback PageRank
     """
-    # Initialize directed graph (citations flow from citing → cited)
     G = nx.DiGraph()
-
-    # Build paper lookup map and add nodes with metadata
     paper_map: Dict[str, Dict[str, Any]] = {}
+
+    # Add paper nodes
     for p in papers:
         pid = p.get("paper_id")
         if not pid:
-            # Skip papers without IDs (data quality issue)
             continue
-        
         paper_map[pid] = p
-        
-        # Add node with truncated label for visualization clarity
         title = p.get("title", pid)
         G.add_node(
             pid,
-            label=title[:60] if title else pid,  # Truncate long titles
+            label=title[:50] if title else pid,
             year=p.get("year"),
             category=p.get("primary_category", "unknown"),
             authors=p.get("authors", []),
         )
 
-    # Add citation edges (only between papers in our dataset)
-    valid_edges = 0
+    # Add citation edges (include external citing/cited papers as nodes)
     for c in citations:
         citing = c.get("citing_id")
         cited = c.get("cited_id")
-        
         if not citing or not cited:
-            # Skip malformed citation records
             continue
         
-        # Only add edge if both papers exist in our dataset
-        if citing in paper_map and cited in paper_map:
-            weight = c.get("weight", 0.5)
-            # Ensure weight is positive and reasonable
-            weight = max(0.0, min(1.0, float(weight)))
-            G.add_edge(citing, cited, weight=weight)
-            valid_edges += 1
+        # Add external papers as nodes if not already present
+        if citing not in paper_map:
+            G.add_node(citing, label=f"External: {citing[:20]}...", year=None, category="external", authors=[])
+        if cited not in paper_map:
+            G.add_node(cited, label=f"External: {cited[:20]}...", year=None, category="external", authors=[])
+        
+        weight = max(0.0, min(1.0, float(c.get("weight", 0.5))))
+        G.add_edge(citing, cited, weight=weight)
 
-    # Compute PageRank for influence scoring
-    # alpha=0.85: Standard damping factor (85% follow links, 15% random jump)
-    # Handles disconnected graphs and converges for typical academic citation networks
+    # PageRank with fallback
     pagerank: Dict[str, float] = {}
     try:
         if G.number_of_nodes() > 0:
             pagerank = nx.pagerank(G, alpha=0.85, max_iter=100, tol=1e-6)
-        else:
-            # Empty graph case
-            pagerank = {}
     except (nx.PowerIterationFailedConvergence, ZeroDivisionError):
-        # Fallback: Uniform distribution if PageRank fails to converge
-        # This can happen with certain graph structures (e.g., all disconnected nodes)
-        num_nodes = len(paper_map)
-        if num_nodes > 0:
-            uniform_score = 1.0 / num_nodes
-            pagerank = {pid: uniform_score for pid in paper_map}
-        else:
-            pagerank = {}
+        n = len(paper_map)
+        if n > 0:
+            pagerank = {pid: 1.0 / n for pid in paper_map}
 
-    # Build vis.js nodes with PageRank-scaled sizes
-    nodes: List[GraphNode] = []
-    for pid, p in paper_map.items():
-        cat = p.get("primary_category", "unknown")
-        pr_score = pagerank.get(pid, 0.0)
+    # Build vis.js nodes (include ALL nodes in graph, including external papers)
+    nodes = []
+    for node_id in G.nodes():
+        node_data = G.nodes[node_id]
+        pr = pagerank.get(node_id, 0.0)
         
-        # Scale PageRank to visual node size (1-10 range for vis.js)
-        # Multiply by 100 to amplify differences, clamp to minimum of 1
-        value = max(1, min(10, int(pr_score * 100)))
+        # Get label from node data if it was set during graph construction
+        if "label" in node_data:
+            label = node_data["label"]
+        elif node_id in paper_map:
+            title = paper_map[node_id].get("title", node_id)
+            label = title[:50] if title else node_id
+        else:
+            label = f"External: {node_id[:20]}..."
         
-        # Truncate title for node label (50 chars for readability)
-        title = p.get("title", pid)
-        label = title[:50] if title else pid
+        group = node_data.get("category", "unknown") if "category" in node_data else (
+            paper_map[node_id].get("primary_category", "unknown") if node_id in paper_map else "external"
+        )
         
         nodes.append(GraphNode(
-            id=pid,
+            id=node_id,
             label=label,
-            group=cat,
-            value=value,
+            group=group,
+            value=max(1, min(10, int(pr * 100))),
         ))
 
-    # Build vis.js edges (only include edges that were successfully added to graph)
-    edges: List[GraphEdge] = []
-    for c in citations:
-        citing = c.get("citing_id")
-        cited = c.get("cited_id")
-        
-        # Only export edges between papers in our dataset
-        if citing in paper_map and cited in paper_map:
-            weight = c.get("weight", 0.5)
-            # Ensure weight is positive and reasonable (same clamping as graph construction)
-            weight = max(0.0, min(1.0, float(weight)))
-            edges.append(GraphEdge(
-                from_id=citing,
-                to_id=cited,
-                weight=weight,
-            ))
+    # Build vis.js edges
+    edges = []
+    for citing, cited, data in G.edges(data=True):
+        edges.append(GraphEdge(
+            from_id=citing,
+            to_id=cited,
+            weight=data.get("weight", 0.5),
+        ))
 
     return CitationGraphPayload(nodes=nodes, edges=edges)
 
@@ -168,11 +148,6 @@ def get_graph_summary(
     """Generate statistical summary of the citation graph.
 
     Computes key graph metrics including connectivity, clustering, and top-cited papers.
-    Useful for understanding graph structure and identifying influential papers.
-
-    Args:
-        papers: List of paper dictionaries (same format as build_citation_graph)
-        citations: List of citation edge dictionaries (same format as build_citation_graph)
 
     Returns:
         Dictionary containing:
@@ -183,24 +158,18 @@ def get_graph_summary(
             - num_clusters (int): Number of connected components (undirected view)
             - density (float): Graph density (actual edges / possible edges)
             - avg_citations_per_paper (float): Mean in-degree
-
-    Notes:
-        - Clustering analysis uses undirected view (citations as bidirectional connections)
-        - Empty graphs return zeros for all metrics
-        - Top-cited list may be shorter than 5 if fewer papers exist
     """
-    # Build directed graph
     G = nx.DiGraph()
-    
-    # Add nodes (with validation)
+
+    # Add paper nodes
     valid_papers = 0
     for p in papers:
         pid = p.get("paper_id")
         if pid:
             G.add_node(pid)
             valid_papers += 1
-    
-    # Add edges (only between valid nodes)
+
+    # Add edges (only between known papers)
     valid_edges = 0
     for c in citations:
         citing = c.get("citing_id")
@@ -209,35 +178,23 @@ def get_graph_summary(
             G.add_edge(citing, cited)
             valid_edges += 1
 
-    # Compute in-degree (citation counts)
-    in_degree: Dict[str, int] = dict(G.in_degree())  # type: ignore[arg-type]
-    
-    # Find top 5 most-cited papers
+    in_degree = dict(G.in_degree())
     top_cited = sorted(in_degree.items(), key=lambda x: x[1], reverse=True)[:5]
 
-    # Analyze clustering using undirected view
-    # (treat citations as bidirectional connections for community detection)
     undirected = G.to_undirected()
     components = list(nx.connected_components(undirected))
-    largest_cluster = max(components, key=len) if components else set()
+    largest = max(components, key=len) if components else set()
 
-    # Compute graph density (actual edges / possible edges)
-    num_nodes = G.number_of_nodes()
-    num_edges = G.number_of_edges()
-    max_possible_edges = num_nodes * (num_nodes - 1)  # Directed graph
-    density = num_edges / max_possible_edges if max_possible_edges > 0 else 0.0
-
-    # Compute average citations per paper
-    avg_citations = num_edges / num_nodes if num_nodes > 0 else 0.0
+    n_nodes = G.number_of_nodes()
+    n_edges = G.number_of_edges()
+    max_edges = n_nodes * (n_nodes - 1)
 
     return {
         "total_nodes": valid_papers,
         "total_edges": valid_edges,
         "top_cited": top_cited,
-        "largest_cluster_size": len(largest_cluster),
+        "largest_cluster_size": len(largest),
         "num_clusters": len(components),
-        "density": round(density, 4),
-        "avg_citations_per_paper": round(avg_citations, 2),
+        "density": round(n_edges / max_edges, 4) if max_edges > 0 else 0.0,
+        "avg_citations_per_paper": round(n_edges / n_nodes, 2) if n_nodes > 0 else 0.0,
     }
-
-# Made with Bob
