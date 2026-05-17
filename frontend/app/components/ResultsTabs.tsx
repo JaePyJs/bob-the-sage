@@ -99,6 +99,48 @@ function ReviewPane({ results }: { results?: PipelineResults }) {
   const summary = results?.graph_summary;
   const source = papers[0]?.source || "unknown";
 
+  const handleDownloadReview = () => {
+    if (!results) return;
+    
+    let reviewText = `SAGE Research Review\n`;
+    reviewText += `Generated: ${new Date().toISOString()}\n`;
+    reviewText += `Session: ${results.session_id}\n\n`;
+    reviewText += `=== INTRODUCTION ===\n\n`;
+    reviewText += `This review synthesizes findings from ${papers.length} papers `;
+    reviewText += `${source === "semantic_scholar" ? "from Semantic Scholar" : "from arXiv"}.\n\n`;
+    reviewText += `=== PAPERS ANALYZED ===\n\n`;
+    
+    papers.forEach((p, i) => {
+      reviewText += `${i + 1}. ${p.title}\n`;
+      if (p.authors.length > 0) {
+        reviewText += `   Authors: ${p.authors.slice(0, 3).join(", ")}${p.authors.length > 3 ? " et al." : ""}\n`;
+      }
+      if (p.year) reviewText += `   Year: ${p.year}\n`;
+      if (p.citation_count !== undefined) reviewText += `   Citations: ${p.citation_count}\n`;
+      if (p.venue) reviewText += `   Venue: ${p.venue}\n`;
+      reviewText += `   Source: ${p.source}\n`;
+      if (p.abstract) reviewText += `   Abstract: ${p.abstract}\n`;
+      reviewText += `\n`;
+    });
+    
+    if (results.paradigm_shifts && results.paradigm_shifts.length > 0) {
+      reviewText += `=== PARADIGM SHIFTS ===\n\n`;
+      results.paradigm_shifts.forEach((shift) => {
+        reviewText += `${shift.year}: ${shift.growth}% growth (${shift.prev_count} → ${shift.curr_count} papers)\n`;
+      });
+    }
+    
+    const dataBlob = new Blob([reviewText], { type: 'text/plain' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `sage-review-${Date.now()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="grid grid-cols-[1fr,280px] gap-6 h-full">
       <div className="flex flex-col gap-5 overflow-y-auto pr-2" style={{ maxHeight: "480px" }}>
@@ -194,7 +236,10 @@ function ReviewPane({ results }: { results?: PipelineResults }) {
           ))}
         </div>
 
-        <button className="w-full py-2 rounded-lg text-xs font-medium border border-[rgba(148,163,184,0.35)] text-[#9CA3AF] hover:text-[#E5E7EB] hover:border-[rgba(148,163,184,0.6)] transition-colors">
+        <button
+          onClick={handleDownloadReview}
+          className="w-full py-2 rounded-lg text-xs font-medium border border-[rgba(148,163,184,0.35)] text-[#9CA3AF] hover:text-[#E5E7EB] hover:border-[rgba(148,163,184,0.6)] transition-colors"
+        >
           Download review
         </button>
       </aside>
@@ -213,20 +258,20 @@ function CitationGraphPane({ results }: { results?: PipelineResults }) {
     const nodes = results.graph.nodes;
     const edges = results.graph.edges;
 
-    if (nodes.length === 0) return;
+    if (!nodes || nodes.length === 0) return;
 
     const data = {
       nodes: nodes.map((n) => ({
-        id: n.id,
-        label: n.label,
-        value: n.value,
-        group: n.group,
+        id: n?.id || '',
+        label: n?.label || '',
+        value: n?.value || 1,
+        group: n?.group || 'default',
       })),
-      edges: edges.map((e) => ({
-        from: e.from_id,
-        to: e.to_id,
-        value: e.weight,
-      })),
+      edges: edges?.map((e) => ({
+        from: e?.from_id || '',
+        to: e?.to_id || '',
+        value: e?.weight || 1,
+      })) || [],
     };
 
     const options = {
@@ -276,6 +321,20 @@ function CitationGraphPane({ results }: { results?: PipelineResults }) {
 
   const summary = results?.graph_summary;
 
+  const handleDownloadGraph = () => {
+    if (!results?.graph) return;
+    const dataStr = JSON.stringify(results.graph, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `sage-citation-graph-${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -298,11 +357,19 @@ function CitationGraphPane({ results }: { results?: PipelineResults }) {
         style={{ height: "440px", backgroundColor: "#111827" }}
       />
 
-      <p className="text-[12px] text-[#9CA3AF]">
-        <span className="font-mono text-[#E5E7EB]">{summary?.total_nodes || 0} nodes, {summary?.total_edges || 0} edges</span> —
-        Largest cluster: {summary?.largest_cluster_size || 0} papers.
-        Node size = PageRank influence.
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-[12px] text-[#9CA3AF]">
+          <span className="font-mono text-[#E5E7EB]">{summary?.total_nodes || 0} nodes, {summary?.total_edges || 0} edges</span> —
+          Largest cluster: {summary?.largest_cluster_size || 0} papers.
+          Node size = PageRank influence.
+        </p>
+        <button
+          onClick={handleDownloadGraph}
+          className="px-3 py-1 rounded border text-[11px] font-medium border-[rgba(148,163,184,0.35)] text-[#9CA3AF] hover:text-[#E5E7EB] hover:border-[rgba(148,163,184,0.6)] transition-colors"
+        >
+          Download graph JSON
+        </button>
+      </div>
     </div>
   );
 }
@@ -397,27 +464,9 @@ function ProposalPane({ results }: { results?: PipelineResults }) {
   const minYear = years.length > 0 ? Math.min(...years) : 2020;
   const maxYear = years.length > 0 ? Math.max(...years) : 2025;
 
-  return (
-    <div className="grid grid-cols-[1fr,240px] gap-6">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] text-[#9CA3AF]">LaTeX Preview</span>
-          <div className="flex gap-2">
-            <button className="px-3 py-1 rounded border text-[11px] font-medium border-[rgba(148,163,184,0.35)] text-[#9CA3AF] hover:text-[#E5E7EB] hover:border-[rgba(148,163,184,0.6)] transition-colors">
-              Copy LaTeX
-            </button>
-            <button className="px-3 py-1 rounded border text-[11px] font-medium border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6]/10 transition-colors">
-              Open in Overleaf
-            </button>
-          </div>
-        </div>
-
-        <pre
-          className="font-mono text-[12px] text-[#E5E7EB] leading-relaxed p-4 rounded-lg overflow-auto whitespace-pre-wrap"
-          style={{ backgroundColor: "#1F2933", maxHeight: "400px", border: "1px solid rgba(148,163,184,0.2)" }}
-        >{`\\section{Project Background}
+  const proposalLatex = `\\section{Project Background}
 Research in this area has grown significantly, with ${papers.length} papers identified
-in the ${minYear}–${maxYear} period. Key themes include ${papers.slice(0, 3).map(p => p.title.split(":"[0]).slice(0, 40)).join("; ")}.
+in the ${minYear}–${maxYear} period. Key themes include ${papers.slice(0, 3).map(p => p.title.split(":")[0]).slice(0, 40)).join("; ")}.
 
 \\section{Research Gaps}
 \\begin{itemize}
@@ -440,7 +489,54 @@ Total: \\$250,000
  - Research operations: 40\\%
  - Personnel: 30\\%
  - Equipment \\& materials: 20\\%
- - Contingency: 10\\%`}</pre>
+ - Contingency: 10\\%`;
+
+  const handleCopyLatex = () => {
+    navigator.clipboard.writeText(proposalLatex);
+  };
+
+  const handleDownloadProposal = () => {
+    const dataBlob = new Blob([proposalLatex], { type: 'text/plain' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `sage-proposal-${Date.now()}.tex`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleOpenOverleaf = () => {
+    const encoded = encodeURIComponent(proposalLatex);
+    window.open(`https://www.overleaf.com/docs?snip_uri=${encoded}`, '_blank');
+  };
+
+  return (
+    <div className="grid grid-cols-[1fr,240px] gap-6">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-[#9CA3AF]">LaTeX Preview</span>
+          <div className="flex gap-2">
+            <button
+              onClick={handleCopyLatex}
+              className="px-3 py-1 rounded border text-[11px] font-medium border-[rgba(148,163,184,0.35)] text-[#9CA3AF] hover:text-[#E5E7EB] hover:border-[rgba(148,163,184,0.6)] transition-colors"
+            >
+              Copy LaTeX
+            </button>
+            <button
+              onClick={handleOpenOverleaf}
+              className="px-3 py-1 rounded border text-[11px] font-medium border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6]/10 transition-colors"
+            >
+              Open in Overleaf
+            </button>
+          </div>
+        </div>
+
+        <pre
+          className="font-mono text-[12px] text-[#E5E7EB] leading-relaxed p-4 rounded-lg overflow-auto whitespace-pre-wrap"
+          style={{ backgroundColor: "#1F2933", maxHeight: "400px", border: "1px solid rgba(148,163,184,0.2)" }}
+        >{proposalLatex}</pre>
       </div>
 
       <aside className="flex flex-col gap-3">
@@ -462,7 +558,10 @@ Total: \\$250,000
           ))}
         </div>
 
-        <button className="w-full py-2 rounded-lg text-xs font-medium bg-[#3B82F6] text-white hover:bg-[#2563EB] transition-colors">
+        <button
+          onClick={handleDownloadProposal}
+          className="w-full py-2 rounded-lg text-xs font-medium bg-[#3B82F6] text-white hover:bg-[#2563EB] transition-colors"
+        >
           Download proposal
         </button>
       </aside>
