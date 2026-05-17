@@ -9,7 +9,7 @@
 [![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen.svg)](pytest.ini)
 [![Built with IBM Bob](https://img.shields.io/badge/Built%20with-IBM%20Bob-blue.svg)](bob_sessions/)
 
-![SAGE Dashboard](frontend/public/Logo.png)
+![SAGE Dashboard](frontend/public/dashboard.png)
 
 ## 🎯 Problem Statement
 
