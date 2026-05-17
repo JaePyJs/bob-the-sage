@@ -1,6 +1,7 @@
 import asyncio
 import streamlit as st
 import time
+import os
 
 # --- Setup page config before anything else ---
 st.set_page_config(
@@ -9,6 +10,11 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+# Inject Streamlit secrets into environment variables for the backend
+if hasattr(st, "secrets"):
+    for k, v in st.secrets.items():
+        os.environ[k] = str(v)
 
 # --- Backend Imports ---
 from backend.mcp_servers.semantic_scholar_mcp import search_papers, _generate_synthetic_citations

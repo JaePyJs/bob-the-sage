@@ -1,0 +1,22 @@
+{
+  "title_guess": "CRISPR-Cas9 Gene Editing for Sickle Cell Disease Treatment",
+  "methodology": "CRISPR-Cas9 gene editing applied to hematopoietic stem cells",
+  "dataset_mentioned": "clinical trial NCT04443907",
+  "key_findings": [
+    "90% reduction in sickling episodes at 12-month follow-up",
+    "Study conducted on 12 sickle cell disease patients"
+  ],
+  "limitations": [
+    "Small sample size",
+    "No control group"
+  ],
+  "novelty_score": 8,
+  "confidence_scores": {
+    "title_guess": 0.85,
+    "methodology": 0.95,
+    "dataset_mentioned": 1.0,
+    "key_findings": 0.92,
+    "limitations": 0.98,
+    "novelty_score": 0.8
+  }
+}

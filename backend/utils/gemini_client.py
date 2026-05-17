@@ -22,7 +22,9 @@ async def generate_text(prompt: str, system: str = "", max_tokens: int = 2048) -
     Returns empty string if no API key is configured.
     Raises httpx.HTTPStatusError on API errors.
     """
-    if not GEMINI_API_KEY:
+    import os
+    api_key = settings.gemini_api_key or os.environ.get("GEMINI_API_KEY", "")
+    if not api_key:
         return ""
 
     contents: list[dict[str, Any]] = [{"role": "user", "parts": [{"text": prompt}]}]
@@ -39,7 +41,7 @@ async def generate_text(prompt: str, system: str = "", max_tokens: int = 2048) -
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
             GEMINI_URL,
-            params={"key": GEMINI_API_KEY},
+            params={"key": api_key},
             json=body,
         )
         resp.raise_for_status()
