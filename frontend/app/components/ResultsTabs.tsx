@@ -367,10 +367,10 @@ function CitationGraphPane({ results }: { results?: PipelineResults }) {
     const allNodes = results.graph.nodes;
     const allEdges = results.graph.edges;
     if (!allNodes || allNodes.length === 0) return;
-    const knownIds = new Set((results.papers || []).map((p) => p.paper_id));
-    const realNodes = allNodes.filter((n) => knownIds.has(n.id) && !n.label?.startsWith("External:"));
-    const realIdSet = new Set(realNodes.map((n) => n.id));
-    const realEdges = allEdges?.filter((e) => realIdSet.has(e.from_id) && realIdSet.has(e.to_id)) || [];
+    // Include all nodes returned by backend (including external nodes added by Semantic Scholar)
+    // to ensure citation edges are visible.
+    const realNodes = allNodes;
+    const realEdges = allEdges || [];
     const paperById = new Map((results.papers || []).map((p) => [p.paper_id, p]));
     const data = {
       nodes: realNodes.map((n) => {
@@ -414,11 +414,18 @@ function CitationGraphPane({ results }: { results?: PipelineResults }) {
         "cs": { color: { background: "#1a2a3a", border: "#3B82F6" } },
         "physics": { color: { background: "#2a1a3a", border: "#A78BFA" } },
         "math": { color: { background: "#1a3a1a", border: "#22C55E" } },
+        "external": { color: { background: "#374151", border: "#6B7280" } },
       },
       interaction: { hover: true, zoomView: true },
     };
 
     const network = new Network(containerRef.current, data, options);
+    
+    // Disable physics after it settles so nodes don't bounce forever
+    network.once("stabilizationIterationsDone", function () {
+      network.setOptions({ physics: { enabled: false } });
+    });
+
     networkRef.current = network;
 
     return () => {

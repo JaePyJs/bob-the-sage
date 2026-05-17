@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
+let BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+if (BACKEND_URL.includes("localhost")) {
+  BACKEND_URL = BACKEND_URL.replace("localhost", "127.0.0.1");
+}
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

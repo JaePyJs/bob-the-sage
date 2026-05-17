@@ -169,12 +169,18 @@ def get_graph_summary(
             G.add_node(pid)
             valid_papers += 1
 
-    # Add edges (only between known papers)
+    # Add edges (include external nodes)
     valid_edges = 0
     for c in citations:
         citing = c.get("citing_id")
         cited = c.get("cited_id")
-        if citing and cited and G.has_node(citing) and G.has_node(cited):
+        if citing and cited:
+            if not G.has_node(citing):
+                G.add_node(citing)
+                valid_papers += 1
+            if not G.has_node(cited):
+                G.add_node(cited)
+                valid_papers += 1
             G.add_edge(citing, cited)
             valid_edges += 1
 
