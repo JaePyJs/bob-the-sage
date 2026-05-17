@@ -1,0 +1,494 @@
+name: graph_skill
+description: |
+  Analyzes citation networks and builds knowledge graphs from academic papers.
+  Identifies influential papers, research communities, citation patterns, and
+  knowledge flow. Integrates with NetworkX for graph construction and analysis.
+  Supports community detection, centrality analysis, and temporal evolution tracking.
+model: gpt-5.5
+input_schema:
+  type: object
+  required:
+    - papers
+    - analysis_type
+  properties:
+    papers:
+      type: array
+      description: Collection of papers with citation information
+      items:
+        type: object
+        required:
+          - paper_id
+          - title
+        properties:
+          paper_id:
+            type: string
+            description: Unique identifier for the paper
+          title:
+            type: string
+          authors:
+            type: array
+            items:
+              type: string
+          year:
+            type: integer
+          citations:
+            type: array
+            description: List of paper IDs that this paper cites
+            items:
+              type: string
+          cited_by:
+            type: array
+            description: List of paper IDs that cite this paper
+            items:
+              type: string
+          citation_count:
+            type: integer
+          keywords:
+            type: array
+            items:
+              type: string
+      minItems: 3
+    analysis_type:
+      type: string
+      description: Type of graph analysis to perform
+      enum:
+        - citation_network
+        - co_citation_analysis
+        - bibliographic_coupling
+        - author_collaboration
+        - knowledge_flow
+        - community_detection
+        - influence_analysis
+        - temporal_evolution
+    graph_parameters:
+      type: object
+      description: Optional parameters for graph construction
+      properties:
+        min_citations:
+          type: integer
+          description: Minimum citations for node inclusion
+          default: 1
+        max_depth:
+          type: integer
+          description: Maximum depth for citation traversal
+          default: 2
+        include_self_citations:
+          type: boolean
+          default: false
+        time_window:
+          type: object
+          properties:
+            start_year:
+              type: integer
+            end_year:
+              type: integer
+    metrics:
+      type: array
+      description: Graph metrics to calculate
+      items:
+        type: string
+        enum:
+          - degree_centrality
+          - betweenness_centrality
+          - pagerank
+          - clustering_coefficient
+          - shortest_paths
+          - connected_components
+      default: [degree_centrality, pagerank]
+output_schema:
+  type: object
+  required:
+    - graph_structure
+    - analysis_results
+    - metrics
+  properties:
+    graph_structure:
+      type: object
+      description: Graph topology and structure
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+              type:
+                type: string
+                enum: [paper, author, keyword, cluster]
+              attributes:
+                type: object
+        edges:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              target:
+                type: string
+              weight:
+                type: number
+              type:
+                type: string
+                enum: [cites, cited_by, co_author, co_citation]
+        statistics:
+          type: object
+          properties:
+            total_nodes:
+              type: integer
+            total_edges:
+              type: integer
+            density:
+              type: number
+            average_degree:
+              type: number
+    analysis_results:
+      type: object
+      description: Results of the requested analysis
+      properties:
+        influential_papers:
+          type: array
+          description: Most influential papers based on centrality metrics
+          items:
+            type: object
+            properties:
+              paper_id:
+                type: string
+              title:
+                type: string
+              influence_score:
+                type: number
+              rank:
+                type: integer
+              metrics:
+                type: object
+        communities:
+          type: array
+          description: Detected research communities
+          items:
+            type: object
+            properties:
+              community_id:
+                type: integer
+              size:
+                type: integer
+              papers:
+                type: array
+                items:
+                  type: string
+              dominant_themes:
+                type: array
+                items:
+                  type: string
+              cohesion_score:
+                type: number
+        citation_patterns:
+          type: object
+          description: Identified citation patterns
+          properties:
+            citation_chains:
+              type: array
+              items:
+                type: array
+                items:
+                  type: string
+            citation_bursts:
+              type: array
+              description: Papers with sudden citation increases
+              items:
+                type: object
+                properties:
+                  paper_id:
+                    type: string
+                  burst_period:
+                    type: string
+                  intensity:
+                    type: number
+            cross_community_citations:
+              type: integer
+        knowledge_flow:
+          type: object
+          description: How knowledge flows through the network
+          properties:
+            flow_direction:
+              type: string
+              enum: [forward, backward, bidirectional]
+            key_bridges:
+              type: array
+              description: Papers that bridge different research areas
+              items:
+                type: object
+                properties:
+                  paper_id:
+                    type: string
+                  bridging_score:
+                    type: number
+            temporal_flow:
+              type: array
+              items:
+                type: object
+                properties:
+                  year:
+                    type: integer
+                  flow_intensity:
+                    type: number
+    metrics:
+      type: object
+      description: Calculated graph metrics
+      additionalProperties:
+        type: object
+    visualization_data:
+      type: object
+      description: Data formatted for graph visualization
+      properties:
+        layout_type:
+          type: string
+          enum: [force_directed, hierarchical, circular, temporal]
+        positions:
+          type: object
+          description: Node positions for visualization
+        color_scheme:
+          type: object
+          description: Color mapping for nodes and edges
+    recommendations:
+      type: array
+      description: Recommendations based on graph analysis
+      items:
+        type: string
+safety_constraints:
+  - Ensure citation relationships are accurately represented without fabrication
+  - Do not infer citations that are not explicitly present in the data
+  - Respect the temporal ordering of citations (papers cannot cite future papers)
+  - Flag any potential citation anomalies or inconsistencies
+  - Maintain author attribution accuracy in collaboration networks
+  - Do not make subjective quality judgments based solely on citation counts
+  - Acknowledge limitations when graph is incomplete or sparse
+  - Ensure community detection does not create artificial research silos
+  - Validate that influence metrics are based on multiple factors, not just citations
+  - Protect against manipulation of citation metrics
+examples:
+  - input:
+      papers:
+        - paper_id: "P1"
+          title: "CRISPR-Cas9: A Revolutionary Gene Editing Tool"
+          authors: ["Doudna J.", "Charpentier E."]
+          year: 2015
+          citations: []
+          cited_by: ["P2", "P3", "P4", "P5"]
+          citation_count: 15000
+          keywords: ["CRISPR", "gene editing", "Cas9"]
+        - paper_id: "P2"
+          title: "Therapeutic Applications of CRISPR in Cancer"
+          authors: ["Zhang F.", "Liu X."]
+          year: 2018
+          citations: ["P1"]
+          cited_by: ["P4", "P5"]
+          citation_count: 450
+          keywords: ["CRISPR", "cancer therapy", "gene editing"]
+        - paper_id: "P3"
+          title: "CRISPR-Based Diagnostics for Infectious Diseases"
+          authors: ["Wang Y.", "Chen L."]
+          year: 2019
+          citations: ["P1"]
+          cited_by: ["P5"]
+          citation_count: 320
+          keywords: ["CRISPR", "diagnostics", "infectious disease"]
+        - paper_id: "P4"
+          title: "Ethical Implications of Human Germline Editing"
+          authors: ["Smith A.", "Johnson B."]
+          year: 2021
+          citations: ["P1", "P2"]
+          cited_by: []
+          citation_count: 280
+          keywords: ["bioethics", "germline editing", "CRISPR"]
+        - paper_id: "P5"
+          title: "CRISPR Applications in Agriculture: A Review"
+          authors: ["Garcia M.", "Patel R."]
+          year: 2023
+          citations: ["P1", "P2", "P3"]
+          cited_by: []
+          citation_count: 190
+          keywords: ["CRISPR", "agriculture", "crop improvement"]
+      analysis_type: citation_network
+      graph_parameters:
+        min_citations: 1
+        max_depth: 2
+        include_self_citations: false
+      metrics:
+        - degree_centrality
+        - betweenness_centrality
+        - pagerank
+    expected_output:
+      graph_structure:
+        nodes:
+          - id: "P1"
+            label: "CRISPR-Cas9: A Revolutionary Gene Editing Tool"
+            type: paper
+            attributes:
+              year: 2015
+              citation_count: 15000
+              authors: ["Doudna J.", "Charpentier E."]
+          - id: "P2"
+            label: "Therapeutic Applications of CRISPR in Cancer"
+            type: paper
+            attributes:
+              year: 2018
+              citation_count: 450
+          - id: "P3"
+            label: "CRISPR-Based Diagnostics for Infectious Diseases"
+            type: paper
+            attributes:
+              year: 2019
+              citation_count: 320
+          - id: "P4"
+            label: "Ethical Implications of Human Germline Editing"
+            type: paper
+            attributes:
+              year: 2021
+              citation_count: 280
+          - id: "P5"
+            label: "CRISPR Applications in Agriculture: A Review"
+            type: paper
+            attributes:
+              year: 2023
+              citation_count: 190
+        edges:
+          - source: "P2"
+            target: "P1"
+            weight: 1
+            type: cites
+          - source: "P3"
+            target: "P1"
+            weight: 1
+            type: cites
+          - source: "P4"
+            target: "P1"
+            weight: 1
+            type: cites
+          - source: "P4"
+            target: "P2"
+            weight: 1
+            type: cites
+          - source: "P5"
+            target: "P1"
+            weight: 1
+            type: cites
+          - source: "P5"
+            target: "P2"
+            weight: 1
+            type: cites
+          - source: "P5"
+            target: "P3"
+            weight: 1
+            type: cites
+        statistics:
+          total_nodes: 5
+          total_edges: 7
+          density: 0.35
+          average_degree: 2.8
+      analysis_results:
+        influential_papers:
+          - paper_id: "P1"
+            title: "CRISPR-Cas9: A Revolutionary Gene Editing Tool"
+            influence_score: 0.95
+            rank: 1
+            metrics:
+              degree_centrality: 0.8
+              betweenness_centrality: 0.6
+              pagerank: 0.42
+          - paper_id: "P2"
+            title: "Therapeutic Applications of CRISPR in Cancer"
+            influence_score: 0.62
+            rank: 2
+            metrics:
+              degree_centrality: 0.5
+              betweenness_centrality: 0.25
+              pagerank: 0.18
+          - paper_id: "P3"
+            title: "CRISPR-Based Diagnostics for Infectious Diseases"
+            influence_score: 0.48
+            rank: 3
+            metrics:
+              degree_centrality: 0.4
+              betweenness_centrality: 0.1
+              pagerank: 0.14
+        communities:
+          - community_id: 1
+            size: 3
+            papers: ["P1", "P2", "P4"]
+            dominant_themes: ["therapeutic applications", "bioethics"]
+            cohesion_score: 0.78
+          - community_id: 2
+            size: 2
+            papers: ["P3", "P5"]
+            dominant_themes: ["diagnostics", "agriculture"]
+            cohesion_score: 0.65
+        citation_patterns:
+          citation_chains:
+            - ["P1", "P2", "P4"]
+            - ["P1", "P2", "P5"]
+            - ["P1", "P3", "P5"]
+          citation_bursts:
+            - paper_id: "P1"
+              burst_period: "2015-2018"
+              intensity: 0.92
+          cross_community_citations: 2
+        knowledge_flow:
+          flow_direction: forward
+          key_bridges:
+            - paper_id: "P1"
+              bridging_score: 0.88
+            - paper_id: "P5"
+              bridging_score: 0.45
+          temporal_flow:
+            - year: 2015
+              flow_intensity: 0.2
+            - year: 2018
+              flow_intensity: 0.5
+            - year: 2019
+              flow_intensity: 0.6
+            - year: 2021
+              flow_intensity: 0.75
+            - year: 2023
+              flow_intensity: 0.85
+      metrics:
+        degree_centrality:
+          P1: 0.8
+          P2: 0.5
+          P3: 0.4
+          P4: 0.4
+          P5: 0.6
+        betweenness_centrality:
+          P1: 0.6
+          P2: 0.25
+          P3: 0.1
+          P4: 0.0
+          P5: 0.0
+        pagerank:
+          P1: 0.42
+          P2: 0.18
+          P3: 0.14
+          P4: 0.13
+          P5: 0.13
+      visualization_data:
+        layout_type: force_directed
+        positions:
+          P1: {x: 0, y: 0}
+          P2: {x: -50, y: 40}
+          P3: {x: 50, y: 40}
+          P4: {x: -70, y: 80}
+          P5: {x: 0, y: 100}
+        color_scheme:
+          community_1: "#FF6B6B"
+          community_2: "#4ECDC4"
+      recommendations:
+        - "P1 is the foundational paper in this network with highest influence across all metrics"
+        - "Strong citation flow from P1 to applied research (P2, P3, P5) indicates successful knowledge translation"
+        - "P5 bridges therapeutic and diagnostic applications, suggesting emerging interdisciplinary research"
+        - "Limited citations to P4 (ethics) suggest potential gap in ethical discourse integration"
+        - "Consider exploring papers that cite P4 to understand ethical framework evolution"
+
+# Made with Bob

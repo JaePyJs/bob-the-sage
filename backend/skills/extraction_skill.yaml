@@ -1,0 +1,159 @@
+name: extraction_skill
+description: |
+  Extracts structured information from academic papers including title, authors, 
+  abstract, key findings, methodology, citations, and research contributions. 
+  Optimized for processing papers from Semantic Scholar and arXiv APIs.
+model: claude-sonnet-4-6
+input_schema:
+  type: object
+  required:
+    - paper_text
+    - extraction_fields
+  properties:
+    paper_text:
+      type: string
+      description: Full text or substantial excerpt from the academic paper
+      minLength: 100
+    extraction_fields:
+      type: array
+      description: List of fields to extract from the paper
+      items:
+        type: string
+        enum:
+          - title
+          - authors
+          - abstract
+          - keywords
+          - methodology
+          - key_findings
+          - contributions
+          - citations
+          - publication_year
+          - venue
+          - research_questions
+          - limitations
+      minItems: 1
+    metadata:
+      type: object
+      description: Optional metadata about the paper source
+      properties:
+        source:
+          type: string
+          enum: [semantic_scholar, arxiv, manual]
+        paper_id:
+          type: string
+        doi:
+          type: string
+output_schema:
+  type: object
+  required:
+    - extracted_data
+    - confidence_scores
+  properties:
+    extracted_data:
+      type: object
+      description: Extracted information organized by field
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: array
+          - type: object
+    confidence_scores:
+      type: object
+      description: Confidence score (0-1) for each extracted field
+      additionalProperties:
+        type: number
+        minimum: 0
+        maximum: 1
+    warnings:
+      type: array
+      description: Any warnings or issues encountered during extraction
+      items:
+        type: string
+    processing_time_ms:
+      type: number
+      description: Time taken to process the extraction
+safety_constraints:
+  - Do not fabricate or hallucinate information not present in the source text
+  - Maintain academic integrity by preserving original author attributions
+  - Flag any potentially plagiarized or duplicated content
+  - Respect copyright by not reproducing full paper text in outputs
+  - Validate that extracted citations match the source material
+  - Return null or empty values for fields that cannot be reliably extracted
+  - Ensure author names are extracted with proper formatting and affiliations
+  - Do not make subjective quality judgments about the research
+examples:
+  - input:
+      paper_text: |
+        CRISPR-Cas9 Mediated Gene Editing in Human Embryos: A Systematic Review
+        
+        Authors: Jane Smith (Stanford University), John Doe (MIT), Alice Johnson (Harvard Medical School)
+        
+        Abstract: This systematic review examines the current state of CRISPR-Cas9 
+        gene editing technology applied to human embryos. We analyzed 47 peer-reviewed 
+        studies published between 2018-2026, focusing on efficacy, safety, and ethical 
+        considerations. Our findings indicate that while CRISPR-Cas9 shows promise for 
+        correcting genetic diseases, significant challenges remain including off-target 
+        effects, mosaicism, and ethical concerns regarding germline modifications.
+        
+        Keywords: CRISPR-Cas9, gene editing, human embryos, germline modification, bioethics
+        
+        Methodology: We conducted a systematic literature search across PubMed, Web of Science, 
+        and Scopus databases. Studies were included if they reported original research on 
+        CRISPR-Cas9 applications in human embryos. Data extraction followed PRISMA guidelines.
+        
+        Key Findings:
+        1. Success rate of targeted gene correction: 72% (range: 45-95%)
+        2. Off-target mutation rate: 8.3% (range: 2-18%)
+        3. Mosaicism observed in 23% of edited embryos
+        
+        Published: Nature Biotechnology, 2026
+      extraction_fields:
+        - title
+        - authors
+        - abstract
+        - keywords
+        - methodology
+        - key_findings
+        - venue
+        - publication_year
+      metadata:
+        source: semantic_scholar
+        paper_id: "abc123xyz"
+    expected_output:
+      extracted_data:
+        title: "CRISPR-Cas9 Mediated Gene Editing in Human Embryos: A Systematic Review"
+        authors:
+          - name: "Jane Smith"
+            affiliation: "Stanford University"
+          - name: "John Doe"
+            affiliation: "MIT"
+          - name: "Alice Johnson"
+            affiliation: "Harvard Medical School"
+        abstract: "This systematic review examines the current state of CRISPR-Cas9 gene editing technology applied to human embryos. We analyzed 47 peer-reviewed studies published between 2018-2026, focusing on efficacy, safety, and ethical considerations. Our findings indicate that while CRISPR-Cas9 shows promise for correcting genetic diseases, significant challenges remain including off-target effects, mosaicism, and ethical concerns regarding germline modifications."
+        keywords:
+          - "CRISPR-Cas9"
+          - "gene editing"
+          - "human embryos"
+          - "germline modification"
+          - "bioethics"
+        methodology: "We conducted a systematic literature search across PubMed, Web of Science, and Scopus databases. Studies were included if they reported original research on CRISPR-Cas9 applications in human embryos. Data extraction followed PRISMA guidelines."
+        key_findings:
+          - "Success rate of targeted gene correction: 72% (range: 45-95%)"
+          - "Off-target mutation rate: 8.3% (range: 2-18%)"
+          - "Mosaicism observed in 23% of edited embryos"
+        venue: "Nature Biotechnology"
+        publication_year: 2026
+      confidence_scores:
+        title: 1.0
+        authors: 0.98
+        abstract: 1.0
+        keywords: 0.95
+        methodology: 0.92
+        key_findings: 0.96
+        venue: 1.0
+        publication_year: 1.0
+      warnings: []
+      processing_time_ms: 1250
+
+# Made with Bob

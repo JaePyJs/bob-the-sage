@@ -1,0 +1,600 @@
+name: proposal_skill
+description: |
+  Generates comprehensive academic research proposals based on literature analysis,
+  identified research gaps, and synthesis of existing work. Creates structured proposals
+  with clear objectives, methodology, expected outcomes, and resource requirements.
+  Optimized for grant applications and research planning in SAGE workflows.
+model: gemini-2.5-flash
+input_schema:
+  type: object
+  required:
+    - research_topic
+    - literature_synthesis
+  properties:
+    research_topic:
+      type: string
+      description: Main research topic or question
+      minLength: 10
+    literature_synthesis:
+      type: object
+      description: Synthesized literature analysis
+      required:
+        - main_themes
+        - research_gaps
+      properties:
+        main_themes:
+          type: array
+          items:
+            type: object
+            properties:
+              theme_name:
+                type: string
+              description:
+                type: string
+        research_gaps:
+          type: array
+          items:
+            type: object
+            properties:
+              gap_description:
+                type: string
+              potential_impact:
+                type: string
+        key_papers:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              authors:
+                type: array
+                items:
+                  type: string
+              year:
+                type: integer
+              key_contribution:
+                type: string
+    proposal_type:
+      type: string
+      description: Type of research proposal
+      enum:
+        - grant_application
+        - dissertation
+        - thesis
+        - research_project
+        - collaborative_study
+        - pilot_study
+      default: research_project
+    target_audience:
+      type: string
+      description: Intended audience for the proposal
+      enum:
+        - funding_agency
+        - academic_committee
+        - industry_partner
+        - general_academic
+      default: academic_committee
+    constraints:
+      type: object
+      description: Constraints and requirements
+      properties:
+        duration_months:
+          type: integer
+          description: Proposed project duration in months
+          minimum: 1
+          maximum: 60
+        budget_range:
+          type: object
+          properties:
+            min:
+              type: number
+            max:
+              type: number
+            currency:
+              type: string
+              default: USD
+        team_size:
+          type: integer
+          description: Expected team size
+        required_sections:
+          type: array
+          items:
+            type: string
+            enum:
+              - abstract
+              - introduction
+              - literature_review
+              - research_questions
+              - objectives
+              - methodology
+              - timeline
+              - expected_outcomes
+              - budget
+              - impact
+              - references
+              - ethics
+    research_approach:
+      type: string
+      description: Preferred research methodology approach
+      enum:
+        - experimental
+        - computational
+        - theoretical
+        - mixed_methods
+        - observational
+        - meta_analysis
+    innovation_focus:
+      type: array
+      description: Areas of innovation to emphasize
+      items:
+        type: string
+        enum:
+          - novel_methodology
+          - interdisciplinary
+          - technology_development
+          - theoretical_advancement
+          - practical_application
+          - social_impact
+output_schema:
+  type: object
+  required:
+    - proposal
+    - metadata
+  properties:
+    proposal:
+      type: object
+      description: Complete research proposal structure
+      properties:
+        title:
+          type: string
+          description: Compelling proposal title
+        abstract:
+          type: string
+          description: Executive summary (200-300 words)
+        introduction:
+          type: object
+          properties:
+            background:
+              type: string
+            significance:
+              type: string
+            context:
+              type: string
+        literature_review:
+          type: object
+          properties:
+            current_state:
+              type: string
+            key_findings:
+              type: array
+              items:
+                type: string
+            identified_gaps:
+              type: array
+              items:
+                type: string
+        research_questions:
+          type: array
+          description: Primary and secondary research questions
+          items:
+            type: object
+            properties:
+              question:
+                type: string
+              type:
+                type: string
+                enum: [primary, secondary]
+              rationale:
+                type: string
+        objectives:
+          type: array
+          description: Specific, measurable objectives
+          items:
+            type: object
+            properties:
+              objective:
+                type: string
+              measurable_outcome:
+                type: string
+              priority:
+                type: string
+                enum: [high, medium, low]
+        methodology:
+          type: object
+          properties:
+            approach:
+              type: string
+            methods:
+              type: array
+              items:
+                type: object
+                properties:
+                  method_name:
+                    type: string
+                  description:
+                    type: string
+                  justification:
+                    type: string
+            data_collection:
+              type: string
+            analysis_plan:
+              type: string
+            validation:
+              type: string
+        timeline:
+          type: array
+          description: Project timeline with milestones
+          items:
+            type: object
+            properties:
+              phase:
+                type: string
+              duration:
+                type: string
+              activities:
+                type: array
+                items:
+                  type: string
+              deliverables:
+                type: array
+                items:
+                  type: string
+        expected_outcomes:
+          type: object
+          properties:
+            scientific_contributions:
+              type: array
+              items:
+                type: string
+            practical_applications:
+              type: array
+              items:
+                type: string
+            publications:
+              type: array
+              items:
+                type: string
+        impact:
+          type: object
+          properties:
+            academic_impact:
+              type: string
+            societal_impact:
+              type: string
+            economic_impact:
+              type: string
+        budget:
+          type: object
+          properties:
+            summary:
+              type: string
+            categories:
+              type: array
+              items:
+                type: object
+                properties:
+                  category:
+                    type: string
+                  amount:
+                    type: number
+                  justification:
+                    type: string
+            total:
+              type: number
+        ethics_considerations:
+          type: object
+          properties:
+            ethical_issues:
+              type: array
+              items:
+                type: string
+            mitigation_strategies:
+              type: array
+              items:
+                type: string
+            compliance:
+              type: array
+              items:
+                type: string
+        references:
+          type: array
+          description: Key references cited in proposal
+          items:
+            type: string
+    metadata:
+      type: object
+      properties:
+        proposal_strength:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall proposal quality score
+        innovation_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        feasibility_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        impact_potential:
+          type: string
+          enum: [high, medium, low]
+        word_count:
+          type: integer
+        estimated_pages:
+          type: integer
+    recommendations:
+      type: array
+      description: Recommendations for strengthening the proposal
+      items:
+        type: object
+        properties:
+          area:
+            type: string
+          recommendation:
+            type: string
+          priority:
+            type: string
+            enum: [high, medium, low]
+    risk_assessment:
+      type: array
+      description: Identified risks and mitigation strategies
+      items:
+        type: object
+        properties:
+          risk:
+            type: string
+          likelihood:
+            type: string
+            enum: [high, medium, low]
+          impact:
+            type: string
+            enum: [high, medium, low]
+          mitigation:
+            type: string
+safety_constraints:
+  - Ensure all proposed research adheres to ethical guidelines and regulations
+  - Do not propose research that could cause harm to participants or subjects
+  - Clearly identify any potential ethical concerns and mitigation strategies
+  - Ensure methodology is scientifically sound and feasible
+  - Do not overstate expected outcomes or make unrealistic claims
+  - Properly attribute ideas and cite relevant literature
+  - Ensure budget estimates are realistic and justified
+  - Flag any potential conflicts of interest
+  - Respect intellectual property and confidentiality requirements
+  - Ensure proposed timeline is achievable given stated resources
+examples:
+  - input:
+      research_topic: "Developing CRISPR-based therapeutics for sickle cell disease with reduced off-target effects"
+      literature_synthesis:
+        main_themes:
+          - theme_name: "CRISPR therapeutic applications"
+            description: "Growing body of work on clinical applications of CRISPR-Cas9 for genetic diseases"
+          - theme_name: "Off-target effect mitigation"
+            description: "Various strategies to reduce unintended genetic modifications"
+          - theme_name: "Sickle cell disease treatment"
+            description: "Current treatments and emerging gene therapy approaches"
+        research_gaps:
+          - gap_description: "Limited strategies for minimizing off-target effects in clinical CRISPR applications"
+            potential_impact: "high"
+          - gap_description: "Lack of long-term safety data for CRISPR-edited cells in sickle cell patients"
+            potential_impact: "high"
+        key_papers:
+          - title: "CRISPR-Cas9 Gene Editing for Sickle Cell Disease"
+            authors: ["Frangoul H", "Altshuler D"]
+            year: 2024
+            key_contribution: "First clinical trial demonstrating efficacy"
+          - title: "High-fidelity CRISPR-Cas9 variants with reduced off-target activity"
+            authors: ["Kleinstiver BP", "Pattanayak V"]
+            year: 2023
+            key_contribution: "Engineered Cas9 variants with improved specificity"
+      proposal_type: grant_application
+      target_audience: funding_agency
+      constraints:
+        duration_months: 36
+        budget_range:
+          min: 500000
+          max: 750000
+          currency: USD
+        team_size: 8
+        required_sections:
+          - abstract
+          - introduction
+          - literature_review
+          - research_questions
+          - objectives
+          - methodology
+          - timeline
+          - expected_outcomes
+          - budget
+          - impact
+          - ethics
+      research_approach: experimental
+      innovation_focus:
+        - novel_methodology
+        - practical_application
+        - social_impact
+    expected_output:
+      proposal:
+        title: "Engineering High-Fidelity CRISPR-Cas9 Systems for Safe and Effective Treatment of Sickle Cell Disease"
+        abstract: "Sickle cell disease (SCD) affects millions worldwide, causing severe pain, organ damage, and reduced life expectancy. While CRISPR-Cas9 gene editing offers unprecedented therapeutic potential, off-target effects remain a critical barrier to clinical translation. This proposal aims to develop and validate high-fidelity CRISPR-Cas9 systems specifically optimized for correcting the HBB gene mutation responsible for SCD, with demonstrably reduced off-target activity. We will engineer novel Cas9 variants using structure-guided design and directed evolution, validate their specificity through comprehensive genome-wide analysis, and assess therapeutic efficacy in patient-derived hematopoietic stem cells and humanized mouse models. Our interdisciplinary approach combines protein engineering, genomics, and clinical hematology expertise to address a critical unmet medical need. Expected outcomes include: (1) CRISPR systems with >95% on-target efficiency and <1% off-target activity, (2) validated therapeutic protocols for SCD treatment, and (3) a roadmap for clinical translation. This work will directly impact 100,000+ SCD patients in the US and millions globally, while establishing safety standards for CRISPR therapeutics broadly."
+        introduction:
+          background: "Sickle cell disease results from a single point mutation (E6V) in the β-globin gene (HBB), causing hemoglobin polymerization and red blood cell sickling. Current treatments include hydroxyurea and bone marrow transplantation, but these have limited efficacy or availability. CRISPR-Cas9 gene editing enables precise correction of the disease-causing mutation, offering curative potential."
+          significance: "Despite promising early clinical trials, off-target effects pose significant safety risks, with mutation rates of 2-15% reported in current systems. Developing high-fidelity CRISPR systems is essential for safe clinical application and regulatory approval."
+          context: "Recent advances in Cas9 engineering have demonstrated proof-of-concept for improved specificity, but these have not been optimized for SCD treatment or validated in clinically relevant models. This proposal addresses this critical gap."
+        literature_review:
+          current_state: "CRISPR-Cas9 has been successfully used to correct the HBB mutation in vitro and in early clinical trials. However, comprehensive off-target analysis reveals unintended modifications in 8-15% of edited cells, raising safety concerns for long-term clinical use."
+          key_findings:
+            - "High-fidelity Cas9 variants (e.g., HiFi-Cas9, evoCas9) show 10-100 fold reduction in off-target activity in model systems"
+            - "Patient-derived hematopoietic stem cells can be efficiently edited and maintain engraftment potential"
+            - "Early clinical trials show therapeutic benefit but lack long-term safety data"
+          identified_gaps:
+            - "No CRISPR systems specifically optimized for HBB editing with validated clinical safety profiles"
+            - "Limited understanding of off-target effects in long-lived hematopoietic stem cells"
+            - "Lack of standardized protocols for comprehensive off-target detection"
+        research_questions:
+          - question: "Can we engineer Cas9 variants with >95% on-target efficiency and <1% off-target activity for HBB correction?"
+            type: primary
+            rationale: "Achieving this threshold would meet regulatory safety standards and enable clinical translation"
+          - question: "What are the long-term genomic consequences of CRISPR editing in hematopoietic stem cells?"
+            type: primary
+            rationale: "Essential for assessing clinical safety and obtaining regulatory approval"
+          - question: "How do different delivery methods affect editing efficiency and off-target rates?"
+            type: secondary
+            rationale: "Optimization of delivery is critical for clinical implementation"
+        objectives:
+          - objective: "Engineer and validate high-fidelity Cas9 variants optimized for HBB editing"
+            measurable_outcome: "≥3 variants with >95% on-target efficiency and <1% off-target activity"
+            priority: high
+          - objective: "Perform comprehensive genome-wide off-target analysis in patient-derived cells"
+            measurable_outcome: "Complete off-target profile for top 3 Cas9 variants using GUIDE-seq and whole-genome sequencing"
+            priority: high
+          - objective: "Validate therapeutic efficacy in humanized mouse models"
+            measurable_outcome: "≥50% correction of sickling phenotype in vivo with no detectable off-target effects"
+            priority: high
+          - objective: "Develop clinical-grade manufacturing protocols"
+            measurable_outcome: "GMP-compatible protocols for Cas9 production and cell editing"
+            priority: medium
+        methodology:
+          approach: "We will use an integrated experimental approach combining protein engineering, genomics, and preclinical validation"
+          methods:
+            - method_name: "Structure-guided Cas9 engineering"
+              description: "Design mutations to enhance DNA binding specificity based on crystal structures"
+              justification: "Rational design enables targeted improvements in specificity"
+            - method_name: "Directed evolution"
+              description: "Screen Cas9 variant libraries for improved on-target/off-target ratios"
+              justification: "Unbiased approach to identify optimal variants"
+            - method_name: "GUIDE-seq and whole-genome sequencing"
+              description: "Comprehensive detection of off-target modifications"
+              justification: "Gold standard methods for off-target analysis"
+            - method_name: "Patient-derived HSC editing"
+              description: "Edit CD34+ cells from SCD patients and assess engraftment"
+              justification: "Clinically relevant model for therapeutic validation"
+            - method_name: "Humanized mouse models"
+              description: "Transplant edited cells into NSG mice and monitor for 12 months"
+              justification: "In vivo validation of therapeutic efficacy and safety"
+          data_collection: "Editing efficiency will be measured by next-generation sequencing, off-targets by GUIDE-seq and WGS, and therapeutic efficacy by hemoglobin analysis and sickling assays"
+          analysis_plan: "Statistical analysis using ANOVA for comparing variants, with n≥3 biological replicates. Bioinformatics pipelines for off-target detection with false discovery rate <0.01"
+          validation: "All key findings will be validated in independent experiments and by orthogonal methods"
+        timeline:
+          - phase: "Phase 1: Cas9 Engineering"
+            duration: "Months 1-12"
+            activities:
+              - "Design and generate Cas9 variant library"
+              - "Screen for improved specificity"
+              - "Validate top candidates"
+            deliverables:
+              - "Library of 50+ Cas9 variants"
+              - "Identification of 5-10 high-fidelity candidates"
+          - phase: "Phase 2: Off-target Analysis"
+            duration: "Months 10-20"
+            activities:
+              - "GUIDE-seq analysis of top variants"
+              - "Whole-genome sequencing"
+              - "Bioinformatics analysis"
+            deliverables:
+              - "Comprehensive off-target profiles"
+              - "Selection of 3 lead candidates"
+          - phase: "Phase 3: Preclinical Validation"
+            duration: "Months 18-36"
+            activities:
+              - "Edit patient-derived HSCs"
+              - "Humanized mouse studies"
+              - "Long-term safety monitoring"
+            deliverables:
+              - "Efficacy and safety data in clinically relevant models"
+              - "IND-enabling package"
+        expected_outcomes:
+          scientific_contributions:
+            - "Novel high-fidelity Cas9 variants with unprecedented specificity"
+            - "Comprehensive understanding of off-target effects in HSCs"
+            - "Validated therapeutic protocols for SCD treatment"
+          practical_applications:
+            - "Clinical-grade CRISPR system ready for IND filing"
+            - "Protocols applicable to other genetic blood disorders"
+            - "Safety standards for CRISPR therapeutics"
+          publications:
+            - "3-5 high-impact publications (Nature Medicine, Cell, NEJM)"
+            - "Patent applications for novel Cas9 variants"
+            - "Clinical trial protocol publication"
+        impact:
+          academic_impact: "This work will establish new standards for CRISPR specificity and safety assessment, advancing the field of gene therapy and providing tools for the broader research community"
+          societal_impact: "Direct benefit to 100,000+ SCD patients in the US and millions globally. Reduction in healthcare costs associated with SCD complications ($1.5B annually in US). Improved quality of life and life expectancy for patients"
+          economic_impact: "Potential market size of $2-3B for SCD gene therapy. Creation of high-skilled jobs in biotechnology sector. Reduction in long-term healthcare costs"
+        budget:
+          summary: "Total budget of $650,000 over 36 months covers personnel, materials, equipment, and animal studies"
+          categories:
+            - category: "Personnel"
+              amount: 350000
+              justification: "2 postdocs, 2 technicians, 1 graduate student (partial support)"
+            - category: "Materials and Supplies"
+              amount: 150000
+              justification: "Molecular biology reagents, sequencing costs, cell culture supplies"
+            - category: "Equipment"
+              amount: 75000
+              justification: "Flow cytometer upgrades, imaging equipment"
+            - category: "Animal Studies"
+              amount: 50000
+              justification: "NSG mice, housing, veterinary care"
+            - category: "Other Direct Costs"
+              amount: 25000
+              justification: "Publication fees, travel to conferences, patient sample acquisition"
+          total: 650000
+        ethics_considerations:
+          ethical_issues:
+            - "Use of patient-derived samples requires informed consent"
+            - "Animal studies must minimize suffering"
+            - "Germline editing concerns (though not applicable to this somatic cell therapy)"
+          mitigation_strategies:
+            - "IRB approval obtained for patient sample collection with comprehensive consent process"
+            - "IACUC approval for all animal studies with humane endpoints"
+            - "Somatic cell editing only - no germline modifications"
+          compliance:
+            - "NIH Guidelines for Research Involving Recombinant DNA"
+            - "FDA regulations for gene therapy products"
+            - "HIPAA compliance for patient data"
+        references:
+          - "Frangoul H, et al. (2024) CRISPR-Cas9 Gene Editing for Sickle Cell Disease. N Engl J Med 384:252-260"
+          - "Kleinstiver BP, et al. (2023) High-fidelity CRISPR-Cas9 variants. Nature 529:490-495"
+          - "Doudna JA, Charpentier E (2017) The new frontier of genome engineering. Science 346:1258096"
+      metadata:
+        proposal_strength: 0.92
+        innovation_score: 0.88
+        feasibility_score: 0.85
+        impact_potential: high
+        word_count: 2847
+        estimated_pages: 12
+      recommendations:
+        - area: "Methodology"
+          recommendation: "Consider adding single-cell RNA-seq analysis to assess cellular heterogeneity in edited populations"
+          priority: medium
+        - area: "Timeline"
+          recommendation: "Build in 3-month buffer for potential delays in patient sample acquisition"
+          priority: high
+        - area: "Budget"
+          recommendation: "Consider allocating funds for preliminary clinical trial planning in Year 3"
+          priority: low
+        - area: "Impact"
+          recommendation: "Strengthen economic impact section with detailed cost-benefit analysis"
+          priority: medium
+      risk_assessment:
+        - risk: "Difficulty recruiting sufficient patient samples"
+          likelihood: medium
+          impact: high
+          mitigation: "Establish partnerships with multiple clinical sites; use cryopreserved samples as backup"
+        - risk: "Cas9 variants may not achieve target specificity"
+          likelihood: low
+          impact: high
+          mitigation: "Multiple parallel engineering approaches; fall-back to best available variants"
+        - risk: "Regulatory landscape changes during project"
+          likelihood: medium
+          impact: medium
+          mitigation: "Maintain close communication with FDA; design studies to exceed current requirements"
+        - risk: "Animal model limitations"
+          likelihood: medium
+          impact: medium
+          mitigation: "Use multiple complementary models; validate key findings in patient-derived xenografts"
+
+# Made with Bob

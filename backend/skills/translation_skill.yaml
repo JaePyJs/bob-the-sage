@@ -1,0 +1,358 @@
+name: translation_skill
+description: |
+  Translates academic papers and research content across languages while preserving
+  technical terminology, citations, and academic tone. Supports cross-lingual research
+  discovery and international collaboration. Optimized for scientific and technical
+  content with domain-specific terminology preservation.
+model: gpt-5.5
+input_schema:
+  type: object
+  required:
+    - content
+    - source_language
+    - target_language
+  properties:
+    content:
+      type: string
+      description: Text content to translate (abstract, full paper, or sections)
+      minLength: 10
+    source_language:
+      type: string
+      description: Source language code (ISO 639-1)
+      pattern: "^[a-z]{2}$"
+      examples: ["en", "zh", "es", "fr", "de", "ja", "ko", "ru", "ar", "pt"]
+    target_language:
+      type: string
+      description: Target language code (ISO 639-1)
+      pattern: "^[a-z]{2}$"
+      examples: ["en", "zh", "es", "fr", "de", "ja", "ko", "ru", "ar", "pt"]
+    content_type:
+      type: string
+      description: Type of academic content being translated
+      enum:
+        - abstract
+        - full_paper
+        - introduction
+        - methodology
+        - results
+        - discussion
+        - conclusion
+        - keywords
+        - title
+      default: abstract
+    domain:
+      type: string
+      description: Academic domain for terminology context
+      enum:
+        - biology
+        - chemistry
+        - physics
+        - computer_science
+        - medicine
+        - engineering
+        - mathematics
+        - social_sciences
+        - humanities
+        - interdisciplinary
+    preserve_elements:
+      type: array
+      description: Elements to preserve without translation
+      items:
+        type: string
+        enum:
+          - citations
+          - equations
+          - chemical_formulas
+          - gene_names
+          - proper_nouns
+          - abbreviations
+          - urls
+          - doi
+      default: [citations, equations, proper_nouns, urls, doi]
+    translation_style:
+      type: string
+      description: Translation style preference
+      enum:
+        - formal_academic
+        - technical_precise
+        - accessible
+        - literal
+      default: formal_academic
+    include_glossary:
+      type: boolean
+      description: Include glossary of key technical terms
+      default: false
+output_schema:
+  type: object
+  required:
+    - translated_content
+    - metadata
+  properties:
+    translated_content:
+      type: string
+      description: Translated text content
+    metadata:
+      type: object
+      required:
+        - source_language
+        - target_language
+        - translation_confidence
+      properties:
+        source_language:
+          type: string
+        target_language:
+          type: string
+        translation_confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall confidence in translation quality
+        word_count:
+          type: object
+          properties:
+            source:
+              type: integer
+            target:
+              type: integer
+        detected_domain:
+          type: string
+          description: Auto-detected academic domain
+        complexity_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Technical complexity of the content
+    preserved_elements:
+      type: object
+      description: Elements that were preserved without translation
+      properties:
+        citations:
+          type: array
+          items:
+            type: string
+        equations:
+          type: array
+          items:
+            type: string
+        technical_terms:
+          type: array
+          items:
+            type: string
+        proper_nouns:
+          type: array
+          items:
+            type: string
+    glossary:
+      type: array
+      description: Key technical terms with translations
+      items:
+        type: object
+        properties:
+          source_term:
+            type: string
+          translated_term:
+            type: string
+          context:
+            type: string
+          confidence:
+            type: number
+    quality_indicators:
+      type: object
+      description: Translation quality metrics
+      properties:
+        terminology_consistency:
+          type: number
+          minimum: 0
+          maximum: 1
+        grammatical_accuracy:
+          type: number
+          minimum: 0
+          maximum: 1
+        semantic_preservation:
+          type: number
+          minimum: 0
+          maximum: 1
+        readability_score:
+          type: number
+          minimum: 0
+          maximum: 1
+    warnings:
+      type: array
+      description: Warnings about potential translation issues
+      items:
+        type: string
+    alternative_translations:
+      type: array
+      description: Alternative translations for ambiguous terms
+      items:
+        type: object
+        properties:
+          original_phrase:
+            type: string
+          alternatives:
+            type: array
+            items:
+              type: string
+          context:
+            type: string
+safety_constraints:
+  - Preserve the original meaning and scientific accuracy of the content
+  - Do not translate technical terms that have established English equivalents in the target language
+  - Maintain citation formats and reference integrity
+  - Flag ambiguous terms that may have multiple valid translations
+  - Preserve mathematical equations, chemical formulas, and gene nomenclature
+  - Respect cultural and linguistic nuances in academic writing conventions
+  - Do not introduce bias or alter the author's intended meaning
+  - Maintain consistency in terminology throughout the translation
+  - Flag content that may be culturally sensitive or require localization
+  - Ensure proper nouns (author names, institutions) are preserved correctly
+examples:
+  - input:
+      content: |
+        CRISPR-Cas9 technology has revolutionized genome editing by enabling precise, 
+        targeted modifications to DNA sequences. This system, derived from bacterial 
+        adaptive immunity, consists of the Cas9 endonuclease and a guide RNA (gRNA) 
+        that directs the enzyme to specific genomic loci. Recent studies have demonstrated 
+        its efficacy in correcting disease-causing mutations with success rates exceeding 
+        70% in vitro. However, off-target effects remain a significant concern, with 
+        mutation rates ranging from 2-15% depending on gRNA design and delivery method. 
+        The therapeutic potential of CRISPR-Cas9 extends to treating genetic disorders 
+        such as sickle cell anemia and β-thalassemia, with several clinical trials 
+        currently underway (Zhang et al., 2026; Doudna & Charpentier, 2017).
+      source_language: "en"
+      target_language: "zh"
+      content_type: abstract
+      domain: biology
+      preserve_elements:
+        - citations
+        - gene_names
+        - proper_nouns
+        - abbreviations
+      translation_style: formal_academic
+      include_glossary: true
+    expected_output:
+      translated_content: |
+        CRISPR-Cas9技术通过实现对DNA序列的精确靶向修饰，彻底改变了基因组编辑领域。
+        该系统源自细菌适应性免疫，由Cas9核酸内切酶和引导RNA（gRNA）组成，后者将
+        酶引导至特定的基因组位点。最近的研究表明，其在体外纠正致病突变的成功率超过
+        70%。然而，脱靶效应仍然是一个重大关注点，突变率在2-15%之间，具体取决于gRNA
+        设计和递送方法。CRISPR-Cas9的治疗潜力延伸至治疗遗传性疾病，如镰状细胞贫血症
+        和β-地中海贫血，目前有多项临床试验正在进行中(Zhang et al., 2026; Doudna & 
+        Charpentier, 2017)。
+      metadata:
+        source_language: "en"
+        target_language: "zh"
+        translation_confidence: 0.94
+        word_count:
+          source: 112
+          target: 156
+        detected_domain: biology
+        complexity_score: 0.82
+      preserved_elements:
+        citations:
+          - "Zhang et al., 2026"
+          - "Doudna & Charpentier, 2017"
+        equations: []
+        technical_terms:
+          - "CRISPR-Cas9"
+          - "DNA"
+          - "Cas9"
+          - "gRNA"
+          - "RNA"
+        proper_nouns:
+          - "Zhang"
+          - "Doudna"
+          - "Charpentier"
+      glossary:
+        - source_term: "genome editing"
+          translated_term: "基因组编辑"
+          context: "Molecular biology technique"
+          confidence: 0.98
+        - source_term: "endonuclease"
+          translated_term: "核酸内切酶"
+          context: "Enzyme that cleaves DNA"
+          confidence: 0.96
+        - source_term: "guide RNA"
+          translated_term: "引导RNA"
+          context: "RNA molecule that directs Cas9"
+          confidence: 0.97
+        - source_term: "genomic loci"
+          translated_term: "基因组位点"
+          context: "Specific locations in genome"
+          confidence: 0.95
+        - source_term: "off-target effects"
+          translated_term: "脱靶效应"
+          context: "Unintended genetic modifications"
+          confidence: 0.93
+        - source_term: "sickle cell anemia"
+          translated_term: "镰状细胞贫血症"
+          context: "Genetic blood disorder"
+          confidence: 0.99
+        - source_term: "β-thalassemia"
+          translated_term: "β-地中海贫血"
+          context: "Inherited blood disorder"
+          confidence: 0.98
+      quality_indicators:
+        terminology_consistency: 0.96
+        grammatical_accuracy: 0.94
+        semantic_preservation: 0.93
+        readability_score: 0.88
+      warnings:
+        - "The term 'adaptive immunity' has multiple valid translations in Chinese; '适应性免疫' was chosen for formal academic context"
+        - "Percentage values and numerical ranges preserved in original format for clarity"
+      alternative_translations:
+        - original_phrase: "revolutionized"
+          alternatives:
+            - "彻底改变"
+            - "革命性地改变"
+            - "根本性地改变"
+          context: "Describing transformative impact on field"
+        - original_phrase: "therapeutic potential"
+          alternatives:
+            - "治疗潜力"
+            - "治疗前景"
+            - "临床应用潜力"
+          context: "Medical application context"
+  - input:
+      content: "Quantum entanglement and superposition in photonic systems"
+      source_language: "en"
+      target_language: "ja"
+      content_type: title
+      domain: physics
+      preserve_elements:
+        - proper_nouns
+      translation_style: formal_academic
+      include_glossary: false
+    expected_output:
+      translated_content: "フォトニック系における量子もつれと重ね合わせ"
+      metadata:
+        source_language: "en"
+        target_language: "ja"
+        translation_confidence: 0.97
+        word_count:
+          source: 7
+          target: 9
+        detected_domain: physics
+        complexity_score: 0.88
+      preserved_elements:
+        citations: []
+        equations: []
+        technical_terms:
+          - "quantum"
+          - "photonic"
+        proper_nouns: []
+      glossary: []
+      quality_indicators:
+        terminology_consistency: 0.98
+        grammatical_accuracy: 0.97
+        semantic_preservation: 0.96
+        readability_score: 0.92
+      warnings: []
+      alternative_translations:
+        - original_phrase: "entanglement"
+          alternatives:
+            - "もつれ"
+            - "エンタングルメント"
+          context: "Quantum physics term - もつれ is standard in Japanese physics literature"
+
+# Made with Bob

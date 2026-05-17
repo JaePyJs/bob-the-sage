@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/* ─── SAGE Design System Tokens ──────────────────────────────── */
+@theme {
+  /* Colors — roles, not random hexes */
+  --color-sage-surface:  #0B1018;
+  --color-sage-elevated: #111827;
+  --color-sage-subtle:   #1F2933;
+  --color-sage-text:     #E5E7EB;
+  --color-sage-muted:    #9CA3AF;
+  --color-sage-success: #22C55E;
+  --color-sage-warning: #F97316;
+  --color-sage-error:   #F43F5E;
+
+  /* Accent (brand) */
+  --color-accent-main:  #3B82F6;
+  --color-accent-soft:  rgba(59, 130, 246, 0.12);
+
+  /* Borders */
+  --color-sage-soft: rgba(148, 163, 184, 0.35);
+
+  /* Fonts */
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Spacing tweaks */
+  --spacing-18: 4.5rem;
+}
+
+/* ─── Base Styles ───────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-sage-surface);
+  color: var(--color-sage-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-sage-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-sage-soft);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
+}
+
+/* ─── Selection ─────────────────────────────────────────────── */
+::selection {
+  background: var(--color-accent-main);
+  color: #fff;
+}
+
+/* ─── Focus visible ─────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent-main);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── Form elements reset ────────────────────────────────────── */
+textarea,
+input,
+select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ─── Vis.js graph canvas container ─────────────────────────── */
+.vis-network {
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
