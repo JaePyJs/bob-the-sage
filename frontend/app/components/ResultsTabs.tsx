@@ -360,6 +360,7 @@ function ReviewPane({ results, query, outputLanguage }: {
 function CitationGraphPane({ results }: { results?: PipelineResults }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<Network | null>(null);
+  const papers = results?.papers || [];
 
   useEffect(() => {
     if (!containerRef.current || !results?.graph) return;
@@ -453,12 +454,17 @@ function CitationGraphPane({ results }: { results?: PipelineResults }) {
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {summary?.top_cited?.slice(0, 3).map(([id, count], i) => (
-            <div key={id} className="flex items-center gap-1.5 text-[11px] text-[#9CA3AF]">
-              <span className="w-2 h-2 rounded-full bg-[#3B82F6]" />
-              Paper {i + 1}: {count} citations
-            </div>
-          ))}
+          {summary?.top_cited?.slice(0, 3).map(([id, count], i) => {
+            const p = papers.find((p: any) => p.paper_id === id);
+            const title = p?.title ? (p.title.length > 25 ? p.title.slice(0, 25) + "…" : p.title) : `Paper ${i + 1}`;
+            const citations = p?.citation_count ? p.citation_count : count;
+            return (
+              <div key={id} className="flex items-center gap-1.5 text-[11px] text-[#9CA3AF]" title={p?.title}>
+                <span className="w-2 h-2 rounded-full bg-[#3B82F6]" />
+                {title}: {citations} citations
+              </div>
+            );
+          })}
         </div>
         <div className="text-[11px] text-[#9CA3AF]">
           {summary?.total_nodes || 0} nodes, {summary?.total_edges || 0} edges

@@ -4,11 +4,11 @@ Uses the Gemini 2.0 Flash REST API directly (no SDK required).
 Falls back gracefully if GEMINI_API_KEY is not set.
 """
 
-import os
 import httpx
 from typing import Any
+from backend.config import settings
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_API_KEY = settings.gemini_api_key or ""
 
 GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
