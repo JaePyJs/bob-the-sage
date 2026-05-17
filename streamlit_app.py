@@ -126,10 +126,13 @@ def main():
                 shifts = results["shifts"]
                 
                 if timeline:
-                    # Quick bar chart of publications per year
                     years = [t["year"] for t in timeline]
-                    counts = [t["count"] for t in timeline]
-                    st.bar_chart(data={"Papers": counts}, x="Years") # pseudo code: st.bar_chart actually takes a df
+                    counts = [t["papers"] for t in timeline]
+                    chart_data = {
+                        "Year": years,
+                        "Publications": counts
+                    }
+                    st.bar_chart(chart_data, x="Year", y="Publications")
                     
                     if shifts:
                         st.subheader("Paradigm Shifts Detected")
