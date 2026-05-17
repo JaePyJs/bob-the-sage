@@ -47,7 +47,8 @@ class TestSettings:
 
     def test_default_values(self):
         """Test default configuration values."""
-        settings = Settings()
+        # Use _env_file=None to prevent loading .env file
+        settings = Settings(_env_file=None)
         assert settings.arxiv_delay_seconds == 5
         assert settings.s2_requests_per_second == 1
         assert settings.deepl_api_key is None
