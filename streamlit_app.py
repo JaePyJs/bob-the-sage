@@ -115,6 +115,21 @@ def main():
                 st.subheader("Research Gaps")
                 for gap in synthesis.get("research_gaps", []):
                     st.error(f"**Gap:** {gap.get('gap')}\n\n**Impact:** {gap.get('impact')}")
+                    
+                st.divider()
+                st.subheader("📚 Source Papers (Legitimacy Verification)")
+                st.markdown("All AI synthesis above is grounded in the following real, peer-reviewed academic papers:")
+                
+                for i, p in enumerate(results.get("papers", [])):
+                    pid = p.get('paper_id', '')
+                    # Semantic Scholar IDs are 40-character hex hashes, arXiv IDs are shorter (e.g., 2305.12345)
+                    url = f"https://semanticscholar.org/paper/{pid}" if len(str(pid)) == 40 else f"https://arxiv.org/abs/{pid}"
+                    
+                    authors = ", ".join(p.get("authors", [])[:3])
+                    if len(p.get("authors", [])) > 3: 
+                        authors += " et al."
+                        
+                    st.markdown(f"{i+1}. **[{p.get('title', 'Untitled')}]({url})** ({p.get('year', 'N/A')}) — *{authors}*")
 
             with tab2:
                 st.subheader("Network Metrics")
