@@ -128,6 +128,14 @@ function ReviewPane({ results, query, outputLanguage }: {
 
   const runSynthesis = async () => {
     if (!results || synthesizing) return;
+    
+    // Check cache first
+    const cacheKey = `synth_${results.session_id}_${outputLanguage || "en"}`;
+    if (window.sessionStorage.getItem(cacheKey)) {
+      setSynthesis(JSON.parse(window.sessionStorage.getItem(cacheKey)!));
+      return;
+    }
+
     setSynthesizing(true);
     setSynthError(null);
     try {
@@ -141,7 +149,10 @@ function ReviewPane({ results, query, outputLanguage }: {
         }),
       });
       const data = await res.json();
-      if (data.executive_summary) setSynthesis(data);
+      if (data.executive_summary) {
+        setSynthesis(data);
+        window.sessionStorage.setItem(cacheKey, JSON.stringify(data));
+      }
       else setSynthError("AI synthesis unavailable.");
     } catch (_) {
       setSynthError("Synthesis failed — showing paper list.");
@@ -597,6 +608,14 @@ function ProposalPane({ results, query, outputLanguage }: { results?: PipelineRe
 
   const generateProposal = async () => {
     if (!results || generating) return;
+    
+    // Check cache first
+    const cacheKey = `prop_${results.session_id}_${outputLanguage || "en"}`;
+    if (window.sessionStorage.getItem(cacheKey)) {
+      setProposalLatex(window.sessionStorage.getItem(cacheKey)!);
+      return;
+    }
+
     setGenerating(true);
     setError(null);
     try {
@@ -615,8 +634,10 @@ function ProposalPane({ results, query, outputLanguage }: { results?: PipelineRe
       const data = await res.json();
       if (data.proposal) {
         setProposalLatex(data.proposal);
+        window.sessionStorage.setItem(cacheKey, data.proposal);
       } else if (data.latex) {
         setProposalLatex(data.latex);
+        window.sessionStorage.setItem(cacheKey, data.latex);
       } else {
         setError("Proposal generation failed.");
       }
