@@ -314,7 +314,6 @@ function CitationGraphPane({ results }: { results?: PipelineResults }) {
     networkRef.current = network;
 
     return () => {
-      network.off();
       network.destroy();
     };
   }, [results]);
@@ -466,7 +465,7 @@ function ProposalPane({ results }: { results?: PipelineResults }) {
 
   const proposalLatex = `\\section{Project Background}
 Research in this area has grown significantly, with ${papers.length} papers identified
-in the ${minYear}–${maxYear} period. Key themes include ${papers.slice(0, 3).map(p => p.title.split(":")[0]).slice(0, 40)).join("; ")}.
+in the ${minYear}–${maxYear} period. Key themes include ${papers.slice(0, 3).map(p => p.title.split(":")[0].slice(0, 40)).join("; ")}.
 
 \\section{Research Gaps}
 \\begin{itemize}
