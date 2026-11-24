@@ -1,7 +1,12 @@
 import asyncio
-import streamlit as st
-import time
+import json
 import os
+from pathlib import Path
+
+import streamlit as st
+
+from backend.engines.citation_graph import build_citation_graph, get_graph_summary
+from backend.engines.timeline import build_timeline, detect_paradigm_shifts
 
 # --- Setup page config before anything else ---
 st.set_page_config(
@@ -11,23 +16,78 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Inject Streamlit secrets into environment variables for the backend
-if hasattr(st, "secrets"):
-    for k, v in st.secrets.items():
-        os.environ[k] = str(v)
+WORKED_EXAMPLE_PATH = Path(__file__).with_name("examples") / "attention_citations.json"
 
-# --- Backend Imports ---
-from backend.mcp_servers.semantic_scholar_mcp import search_papers, _generate_synthetic_citations
-from backend.engines.citation_graph import build_citation_graph, get_graph_summary
-from backend.engines.timeline import build_timeline, detect_paradigm_shifts
-from backend.api.routes.synthesize import synthesize_literature, SynthesizePayload
-from backend.api.routes.proposal import generate_proposal, ProposalPayload
+
+def show_worked_example():
+    example = json.loads(WORKED_EXAMPLE_PATH.read_text(encoding="utf-8"))
+    papers = example["papers"]
+    citations = example["citations"]
+    papers_by_id = {paper["paper_id"]: paper for paper in papers}
+
+    graph = build_citation_graph(papers, citations)
+    timeline = build_timeline(papers, citations)
+
+    st.header(example["query"])
+    st.write(
+        "Explore a hand-picked set of papers and follow each citation back to the original reference. "
+        "SAGE builds this graph and timeline locally, without API keys."
+    )
+    paper_count, citation_count = st.columns(2)
+    paper_count.metric("Papers", len(graph.nodes))
+    citation_count.metric("Checked citations", len(graph.edges))
+
+    graph_tab, timeline_tab, source_tab = st.tabs(["Citation graph", "Timeline", "Sources"])
+    with graph_tab:
+        st.caption("Arrows point from the paper making the citation to the paper it cites.")
+        dot = ['digraph { rankdir=BT; bgcolor="white"; node [shape=box, style=rounded];']
+        for node in graph.nodes:
+            label = papers_by_id[node.id]["short_title"]
+            dot.append(f"{json.dumps(node.id)} [label={json.dumps(label)}];")
+        for edge in graph.edges:
+            dot.append(f"{json.dumps(edge.from_id)} -> {json.dumps(edge.to_id)};")
+        st.graphviz_chart("\n".join([*dot, "}"]))
+
+    with timeline_tab:
+        st.caption("Citations count toward the publication year of the paper receiving them.")
+        st.table(
+            [
+                {"Year": row["year"], "Papers": row["papers"], "Citations received": row["citations"]}
+                for row in timeline
+            ]
+        )
+
+    with source_tab:
+        st.subheader("Papers")
+        for paper in papers:
+            st.markdown(f"- [{paper['title']}]({paper['url']}) ({paper['year']}, {paper['venue']})")
+
+        st.subheader("Where to check each citation")
+        for citation in citations:
+            citing = papers_by_id[citation["citing_id"]]["short_title"]
+            cited = papers_by_id[citation["cited_id"]]["short_title"]
+            st.markdown(f"- {citing} cites {cited}. [{citation['reference']}]({citation['reference_url']})")
+
+    st.caption(
+        "Counts apply only to these four selected papers and their in-sample references. "
+        "Empty years reflect the sample. This example runs without live search or AI synthesis."
+    )
 
 
 def run_pipeline(query: str):
     """Run the entire SAGE backend pipeline synchronously for Streamlit."""
     with st.status(f"Running pipeline for '{query}'...", expanded=True) as status:
         try:
+            try:
+                for key, value in st.secrets.items():
+                    os.environ[key] = str(value)
+            except FileNotFoundError:
+                pass
+
+            from backend.api.routes.proposal import generate_proposal, ProposalPayload
+            from backend.api.routes.synthesize import synthesize_literature, SynthesizePayload
+            from backend.mcp_servers.semantic_scholar_mcp import search_papers, _generate_synthetic_citations
+
             st.write("🔍 Searching academic databases...")
             # We use asyncio to run the async API
             loop = asyncio.new_event_loop()
@@ -86,6 +146,11 @@ def run_pipeline(query: str):
 
 def main():
     st.title("SAGE: Systematic Academic Guidance Engine")
+    mode = st.radio("Analysis mode", ["Worked example", "Live search"], horizontal=True)
+    if mode == "Worked example":
+        show_worked_example()
+        return
+
     st.markdown("Enter a query to discover, analyze, and synthesize academic research across multiple disciplines.")
 
     query = st.text_input("Research Topic", placeholder="e.g., Quantum computing error correction...")

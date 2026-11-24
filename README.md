@@ -6,10 +6,28 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.130-green.svg)](https://fastapi.tiangolo.com/)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)
-[![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen.svg)](pytest.ini)
 [![Built with IBM Bob](https://img.shields.io/badge/Built%20with-IBM%20Bob-blue.svg)](bob_sessions/)
 
 ![SAGE Dashboard](frontend/public/sage_dashboard_screenshot.png)
+
+## Try a worked example without API keys
+
+From the repository root, with Python 3.11 active in your environment:
+
+```bash
+python -m pip install -r requirements.txt
+python -m streamlit run streamlit_app.py --browser.gatherUsageStats false
+```
+
+Open the local URL Streamlit prints. **Worked example** opens by default and asks how papers on early attention and Transformer language models cite each other. It works locally after installation and needs no `.env` file or API credentials.
+
+1. In **Citation graph**, follow the arrows from GPT-3 to both BERT and the original Transformer. The Transformer paper cites Bahdanau et al.'s earlier work on attention in neural machine translation.
+2. In **Timeline**, look at 2017. The sample contains one paper from that year, and two of the selected papers cite it. SAGE attributes citations to the year of the cited paper.
+3. In **Sources**, open the original papers and use the linked reference entries to check all four arrows.
+
+The [example data](examples/attention_citations.json) contains four hand-selected conference papers and four manually checked references. SAGE passes that input through the same [graph](backend/engines/citation_graph.py) and [timeline](backend/engines/timeline.py) engines used in Live search. The years refer to conference publication, so the example groups the BERT paper under 2019 even though the GPT-3 bibliography cites its 2018 preprint.
+
+The example covers a small selection of papers. Its citation counts and empty years describe that selection only. Use **Live search** to enter another query and run discovery and synthesis.
 
 ## 🎯 Problem Statement
 
@@ -106,8 +124,12 @@ Access from Windows: `http://localhost:3000`
 ### Running Tests
 
 ```bash
-# Backend tests (96 tests, 90%+ coverage)
+# Backend tests with the repository's coverage gate
+python -m pip install pytest-cov
 pytest backend/tests/ -v --cov=backend
+
+# Worked example without the full-suite coverage gate
+python -m pytest -o addopts= backend/tests/test_worked_example.py
 
 # Specific test suites
 pytest backend/tests/test_citation_graph.py -v
@@ -254,7 +276,7 @@ sage/
 │   │   └── translation_mcp.py       # DeepL integration
 │   ├── models/                # Pydantic data models
 │   ├── skills/                # AI skill definitions (5 YAML files)
-│   ├── tests/                 # Test suite (96 tests, 90%+ coverage)
+│   ├── tests/                 # Backend tests and Streamlit worked-example tests
 │   └── utils/                 # Logging, validation, audit
 │
 ├── frontend/                   # Next.js 15 frontend (TypeScript)
@@ -341,11 +363,10 @@ See [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) for full security review.
 - **API Rate Limits**: 
   - Semantic Scholar: 1 request/second (with exponential backoff)
   - arXiv: 1 request/5 seconds
-- **Test Execution**: <5 seconds for full suite (96 tests)
 
 ## 🧪 Testing
 
-SAGE includes a comprehensive test suite with 96 tests achieving 90%+ code coverage.
+The test suite covers the graph and timeline engines, API routes, data clients, and the Streamlit worked example. The full-suite command enforces the 80% threshold configured in [pytest.ini](pytest.ini).
 
 ```bash
 # Run all tests
@@ -362,11 +383,7 @@ open htmlcov/index.html
 ```
 
 **Test Characteristics**:
-- All tests use mocks (no live API calls)
-- Fast execution (<1 minute for full suite)
-- Comprehensive edge case coverage
-- Async/await properly handled
-- 90%+ code coverage on core engines
+- Data-client tests use mocked responses. The worked example test runs the actual analysis engines with outbound name resolution blocked.
 
 ## 🤝 Contributing
 
@@ -374,7 +391,7 @@ We welcome contributions! Please follow these guidelines:
 
 1. **Fork** the repository
 2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
-3. **Write tests**: Maintain >90% coverage
+3. **Write tests** to cover the change.
 4. **Follow code style**: Use Black for Python, Prettier for TypeScript
 5. **Commit** with conventional commits: `feat:`, `fix:`, `docs:`, `test:`
 6. **Push** to branch: `git push origin feature/amazing-feature`
@@ -414,7 +431,6 @@ pytest backend/tests/ --cov=backend
 
 - **Development Time**: 2 hours with IBM Bob AI Assistant
 - **Bobcoin Cost**: $5.50 (ROI: 200x-300x)
-- **Test Coverage**: 90%+ (96 tests passing)
 - **Documentation**: 2,779 lines across 7 files
 - **Security Audit**: 13 vulnerabilities identified and documented
 - **Production Ready**: Full type safety, error handling, and validation
