@@ -1,0 +1,63 @@
+{
+  "query": "How do papers on early attention and Transformer language models cite each other?",
+  "papers": [
+    {
+      "paper_id": "bahdanau-2015",
+      "short_title": "Bahdanau et al. (2015)",
+      "title": "Neural Machine Translation by Jointly Learning to Align and Translate",
+      "year": 2015,
+      "venue": "ICLR",
+      "url": "https://arxiv.org/abs/1409.0473"
+    },
+    {
+      "paper_id": "vaswani-2017",
+      "short_title": "Transformer (2017)",
+      "title": "Attention Is All You Need",
+      "year": 2017,
+      "venue": "NeurIPS",
+      "url": "https://papers.nips.cc/paper_files/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html"
+    },
+    {
+      "paper_id": "devlin-2019",
+      "short_title": "BERT (2019)",
+      "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+      "year": 2019,
+      "venue": "NAACL-HLT",
+      "url": "https://aclanthology.org/N19-1423/"
+    },
+    {
+      "paper_id": "brown-2020",
+      "short_title": "GPT-3 (2020)",
+      "title": "Language Models are Few-Shot Learners",
+      "year": 2020,
+      "venue": "NeurIPS",
+      "url": "https://papers.nips.cc/paper_files/paper/2020/hash/1457c0d6bfcb4967418bfb8ac142f64a-Abstract.html"
+    }
+  ],
+  "citations": [
+    {
+      "citing_id": "vaswani-2017",
+      "cited_id": "bahdanau-2015",
+      "reference": "Reference [2], PDF page 10",
+      "reference_url": "https://papers.nips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf#page=10"
+    },
+    {
+      "citing_id": "devlin-2019",
+      "cited_id": "vaswani-2017",
+      "reference": "References, printed page 4181",
+      "reference_url": "https://aclanthology.org/N19-1423.pdf#page=11"
+    },
+    {
+      "citing_id": "brown-2020",
+      "cited_id": "vaswani-2017",
+      "reference": "Reference [134], arXiv version",
+      "reference_url": "https://arxiv.org/html/2005.14165v4#bib.bib134"
+    },
+    {
+      "citing_id": "brown-2020",
+      "cited_id": "devlin-2019",
+      "reference": "Reference [20], arXiv version",
+      "reference_url": "https://arxiv.org/html/2005.14165v4#bib.bib20"
+    }
+  ]
+}
